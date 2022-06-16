@@ -39,6 +39,32 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
   }
 
   private _webviewView: vscode.WebviewView;
+
+  /**
+   * postMessage
+   */
+  public handleAddCluster(data: any) {
+    host.showProgressing("Adding cluster ...", async () => {
+      let { kubeconfig } = await this.getKubeconfig(data.data);
+
+      let newLocalCluster = await LocalCluster.appendLocalClusterByKubeConfig(
+        kubeconfig
+      );
+
+      if (newLocalCluster) {
+        await LocalCluster.getLocalClusterRootNode(newLocalCluster);
+
+        const node = state.getNode(NOCALHOST) as NocalhostRootNode;
+
+        node && (await node.addCluster(newLocalCluster));
+
+        await state.refreshTree(true);
+
+        vscode.window.showInformationMessage("Success");
+      }
+    });
+  }
+
   resolveWebviewView(
     webviewView: vscode.WebviewView,
     _: vscode.WebviewViewResolveContext,
@@ -58,7 +84,6 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage(
       async (data: { data: any; type: string }) => {
         const { type } = data;
-
         switch (type) {
           case "connectServer": {
             vscode.commands.executeCommand(SIGN_IN, data.data);
@@ -95,6 +120,7 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
             });
             break;
           }
+
           case "initKubePath": {
             const payload = data.data ?? {};
 
@@ -123,6 +149,7 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
             });
             break;
           }
+
           case "checkKubeconfig":
             this.checkKubeconfig(type, data.data, webviewView);
             break;
@@ -153,7 +180,7 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
     );
   }
 
-  private async getKubeconfig(data: {
+  public async getKubeconfig(data: {
     currentContext?: string;
     strKubeconfig?: string;
     namespace?: string;

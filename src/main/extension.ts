@@ -77,6 +77,22 @@ export async function activate(context: vscode.ExtensionContext) {
     )
   );
 
+  const handleUri = async (uri: vscode.Uri) => {
+    const queryParams = new URLSearchParams(uri.query);
+
+    homeWebViewProvider.handleAddCluster({
+      data: {
+        currentContext: queryParams.get("context"),
+        strKubeconfig: queryParams.get("kubeconfig"),
+        namespace: queryParams.get("namespace"),
+      },
+    });
+
+    vscode.window.showInformationMessage(`Nocalhost wake up`);
+  };
+
+  context.subscriptions.push(vscode.window.registerUriHandler({ handleUri }));
+
   let nocalhostFileSystemProvider = new NocalhostFileSystemProvider();
   appTreeView = vscode.window.createTreeView("Nocalhost", {
     treeDataProvider: appTreeProvider,
@@ -154,6 +170,7 @@ export async function activate(context: vscode.ExtensionContext) {
   createSyncManage(context);
   activateNocalhostDebug(context);
 }
+
 function bindEvent() {
   messageBus.on("refreshTree", (value) => {
     if (value.isCurrentWorkspace) {
