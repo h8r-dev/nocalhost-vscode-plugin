@@ -296,6 +296,9 @@ export default class StartDevModeCommand implements ICommand {
       });
     }
     if (gitUrl) {
+      vscode.window.showInformationMessage(
+        "Please select directory to clone your code"
+      );
       const saveUris = await host.showOpenDialog({
         canSelectFiles: false,
         canSelectFolders: true,
@@ -402,12 +405,13 @@ export default class StartDevModeCommand implements ICommand {
       }
     };
 
-    const result = await host.showInformationMessage(
-      nls["tips.open"],
-      { modal: true },
-      nls["bt.open.dir"],
-      nls["bt.open.other"]
-    );
+    // const result = await host.showInformationMessage(
+    //   nls["tips.open"],
+    //   { modal: true },
+    //   nls["bt.open.dir"],
+    //   nls["bt.open.other"]
+    // );
+    const result = nls["bt.open.dir"];
     if (result === nls["bt.open.other"]) {
       await getUrl();
     } else if (result === nls["bt.open.dir"]) {
@@ -454,7 +458,15 @@ export default class StartDevModeCommand implements ICommand {
     const currentUri = host.getCurrentRootPath();
 
     if (!associateDir) {
-      destDir = await this.firstOpen(appName, node, containerName);
+      destDir = await this.cloneCode(
+        host,
+        node.getKubeConfigPath(),
+        node.getNameSpace(),
+        appName,
+        node.name,
+        node.resourceType,
+        containerName
+      );
     } else if (currentUri !== associateDir) {
       destDir = await this.getTargetDirectory();
     } else {

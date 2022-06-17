@@ -94,8 +94,6 @@ export async function activate(context: vscode.ExtensionContext) {
       appTreeProvider,
       appTreeView
     );
-
-    vscode.window.showInformationMessage(`Nocalhost wake up`);
   };
 
   context.subscriptions.push(vscode.window.registerUriHandler({ handleUri }));
