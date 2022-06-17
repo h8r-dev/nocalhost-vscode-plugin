@@ -3,7 +3,10 @@ import * as os from "os";
 import * as path from "path";
 import * as yaml from "yaml";
 
-import { SIGN_IN } from "../commands/constants";
+import { SIGN_IN, START_DEV_MODE } from "../commands/constants";
+import { BaseNocalhostNode } from "../nodes/types/nodeType";
+import { DevSpaceNode } from "../nodes/DevSpaceNode";
+import NocalhostAppProvider from "../appProvider";
 import { NocalhostRootNode } from "../nodes/NocalhostRootNode";
 
 import { LocalCluster } from "../clusters";
@@ -41,11 +44,17 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
   private _webviewView: vscode.WebviewView;
 
   /**
-   * postMessage
+   * Handle: Add_Cluster -> Locate workload node in tree view -> Enter dev mode
    */
-  public handleAddCluster(data: any) {
+  public handleAddCluster(
+    data: any,
+    appTreeProvider: NocalhostAppProvider,
+    appTreeView: vscode.TreeView<BaseNocalhostNode>
+  ) {
+    const { connectionInfo, application, workloadType, workload } = data;
+
     host.showProgressing("Adding cluster ...", async () => {
-      let { kubeconfig } = await this.getKubeconfig(data.data);
+      let { kubeconfig } = await this.getKubeconfig(connectionInfo);
 
       let newLocalCluster = await LocalCluster.appendLocalClusterByKubeConfig(
         kubeconfig
@@ -56,12 +65,61 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
 
         const node = state.getNode(NOCALHOST) as NocalhostRootNode;
 
+        // Add Cluster
         node && (await node.addCluster(newLocalCluster));
 
+        // Refresh UI
         await state.refreshTree(true);
 
         vscode.window.showInformationMessage("Success");
       }
+
+      // Locate workload node.
+      const targetWorkloadNode: BaseNocalhostNode = await host.withProgress(
+        {
+          title: "Entering dev mode...",
+          cancellable: true,
+        },
+        async (_, token) => {
+          const searchPath = [
+            "kubeconfig-node", // root node placeholder.
+            connectionInfo.namespace,
+            application,
+            "Workloads",
+            workloadType + "s",
+            workload,
+          ];
+          return searchPath.reduce(async (parent, label) => {
+            if (token.isCancellationRequested) {
+              return null;
+            }
+
+            const children = await (await parent).getChildren();
+
+            const child = children.find((item: any) => {
+              if (item.type === "KUBECONFIG") {
+                // Return it if it's a kubeconfig node
+                return true;
+              }
+
+              if (item instanceof DevSpaceNode) {
+                return item.info.namespace === label.toLowerCase();
+              }
+
+              return item.label.toLowerCase() === label.toLowerCase();
+            });
+
+            return child;
+          }, Promise.resolve(appTreeProvider as Pick<BaseNocalhostNode, "getChildren">));
+        }
+      );
+
+      // Reveal node in tree view.
+      const nodeStateId = state.getNode(targetWorkloadNode.getNodeStateId());
+      await appTreeView.reveal(nodeStateId);
+
+      // Enter dev mode.
+      vscode.commands.executeCommand(START_DEV_MODE, targetWorkloadNode);
     });
   }
 

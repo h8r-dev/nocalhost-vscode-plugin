@@ -63,6 +63,7 @@ type StartDevModeInfoType = {
 export default class StartDevModeCommand implements ICommand {
   command: string = START_DEV_MODE;
   context: vscode.ExtensionContext;
+
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
     registerCommand(context, this.command, true, this.execCommand.bind(this));
@@ -109,9 +110,11 @@ export default class StartDevModeCommand implements ICommand {
       }).exec();
     }
 
+    // Show the node in tree view.
     if (node instanceof ControllerResourceNode && appTreeView) {
       await appTreeView.reveal(node, { select: true, focus: true });
     }
+
     host.log("[start dev] Initializing..", true);
 
     // get container name from storage

@@ -80,13 +80,20 @@ export async function activate(context: vscode.ExtensionContext) {
   const handleUri = async (uri: vscode.Uri) => {
     const queryParams = new URLSearchParams(uri.query);
 
-    homeWebViewProvider.handleAddCluster({
-      data: {
-        currentContext: queryParams.get("context"),
-        strKubeconfig: queryParams.get("kubeconfig"),
-        namespace: queryParams.get("namespace"),
+    homeWebViewProvider.handleAddCluster(
+      {
+        connectionInfo: {
+          currentContext: queryParams.get("context"),
+          strKubeconfig: queryParams.get("kubeconfig"),
+          namespace: queryParams.get("namespace"),
+        },
+        application: queryParams.get("application"),
+        workloadType: queryParams.get("workload_type"),
+        workload: queryParams.get("workload"),
       },
-    });
+      appTreeProvider,
+      appTreeView
+    );
 
     vscode.window.showInformationMessage(`Nocalhost wake up`);
   };
@@ -230,6 +237,7 @@ function bindEvent() {
     execCommand(commandData);
   }
 }
+
 function launchDevSpace() {
   SyncServiceCommand.checkSync();
 
