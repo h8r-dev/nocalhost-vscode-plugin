@@ -3,7 +3,7 @@ import * as os from "os";
 import * as path from "path";
 import * as yaml from "yaml";
 
-import { SIGN_IN, START_DEV_MODE } from "../commands/constants";
+import { SIGN_IN, START_DEV_MODE, DEBUG } from "../commands/constants";
 import { BaseNocalhostNode } from "../nodes/types/nodeType";
 import { DevSpaceNode } from "../nodes/DevSpaceNode";
 import NocalhostAppProvider from "../appProvider";
@@ -44,17 +44,20 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
   private _webviewView: vscode.WebviewView;
 
   /**
-   * Handle: Add_Cluster -> Locate workload node in tree view -> Enter dev mode
+   * Handle: Add_Cluster -> Locate workload node in tree view -> Enter dev mode | Enter debug mode
    */
-  public handleAddCluster(
+  public handleDevelopApp(
     data: any,
     appTreeProvider: NocalhostAppProvider,
     appTreeView: vscode.TreeView<BaseNocalhostNode>
   ) {
-    const { connectionInfo, application, workloadType, workload } = data;
+    const { connectionInfo, application, workloadType, workload, action } =
+      data;
 
     host.showProgressing("Adding cluster ...", async () => {
-      let { kubeconfig } = await this.getKubeconfig(connectionInfo);
+      let { kubeconfig, clusterName } = await this.getKubeconfig(
+        connectionInfo
+      );
 
       let newLocalCluster = await LocalCluster.appendLocalClusterByKubeConfig(
         kubeconfig
@@ -77,15 +80,12 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
       // Locate workload node.
       const targetWorkloadNode: BaseNocalhostNode = await host.withProgress(
         {
-          title: "Entering dev mode...",
+          title: `Entering ${action} mode...`,
           cancellable: true,
         },
         async (_, token) => {
-          // TODO: Here, we select first kubernetes node defaultly.
-          // If there are required to select a specific kubernetes node from multi kubernetes nodes,
-          // You should get current kubernetes node name from `connectionInfo`.
           const searchPath = [
-            "kubeconfig-node", // root node placeholder.
+            clusterName,
             connectionInfo.namespace,
             application,
             "Workloads",
@@ -100,15 +100,9 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
             const children = await (await parent).getChildren();
 
             const child = children.find((item: any) => {
-              if (item.type === "KUBECONFIG") {
-                // Return it if it's a kubeconfig node
-                return true;
-              }
-
               if (item instanceof DevSpaceNode) {
                 return item.info.namespace === label.toLowerCase();
               }
-
               return item.label.toLowerCase() === label.toLowerCase();
             });
 
@@ -121,8 +115,18 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
       const nodeStateId = state.getNode(targetWorkloadNode.getNodeStateId());
       await appTreeView.reveal(nodeStateId);
 
-      // Enter dev mode.
-      vscode.commands.executeCommand(START_DEV_MODE, targetWorkloadNode);
+      switch (action) {
+        case "run":
+          vscode.commands.executeCommand(START_DEV_MODE, targetWorkloadNode); // Enter dev mode.
+          break;
+
+        case "debug":
+          vscode.commands.executeCommand(DEBUG, targetWorkloadNode); // Enter debug mode.
+          break;
+
+        default:
+          break;
+      }
     });
   }
 
@@ -260,6 +264,12 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
       }
     }
 
+    let clusterName = "";
+    if (strKubeconfig) {
+      const parsedKubeconfig = yaml.parse(strKubeconfig);
+      clusterName = parsedKubeconfig.clusters[0].name;
+    }
+
     if (kubeconfig) {
       if (namespace) {
         const context = kubeconfig.contexts?.find(
@@ -275,7 +285,14 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
       }
     }
 
-    return { kubeconfig, currentContext, namespace, path, strKubeconfig };
+    return {
+      kubeconfig,
+      currentContext,
+      namespace,
+      path,
+      strKubeconfig,
+      clusterName,
+    };
   }
 
   private async checkKubeconfig(

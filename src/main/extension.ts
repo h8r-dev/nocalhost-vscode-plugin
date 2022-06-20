@@ -80,7 +80,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const handleUri = async (uri: vscode.Uri) => {
     const queryParams = new URLSearchParams(uri.query);
 
-    homeWebViewProvider.handleAddCluster(
+    homeWebViewProvider.handleDevelopApp(
       {
         connectionInfo: {
           strKubeconfig: queryParams.get("kubeconfig"),
@@ -89,6 +89,7 @@ export async function activate(context: vscode.ExtensionContext) {
         application: queryParams.get("application"),
         workloadType: queryParams.get("workload_type"),
         workload: queryParams.get("workload"),
+        action: queryParams.get("action"),
       },
       appTreeProvider,
       appTreeView
