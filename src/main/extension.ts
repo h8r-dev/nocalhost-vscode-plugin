@@ -83,7 +83,6 @@ export async function activate(context: vscode.ExtensionContext) {
     homeWebViewProvider.handleAddCluster(
       {
         connectionInfo: {
-          currentContext: queryParams.get("context"),
           strKubeconfig: queryParams.get("kubeconfig"),
           namespace: queryParams.get("namespace"),
         },

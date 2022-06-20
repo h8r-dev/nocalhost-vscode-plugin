@@ -81,6 +81,9 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
           cancellable: true,
         },
         async (_, token) => {
+          // TODO: Here, we select first kubernetes node defaultly.
+          // If there are required to select a specific kubernetes node from multi kubernetes nodes,
+          // You should get current kubernetes node name from `connectionInfo`.
           const searchPath = [
             "kubeconfig-node", // root node placeholder.
             connectionInfo.namespace,
