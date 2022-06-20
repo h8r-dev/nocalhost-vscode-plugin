@@ -1,6 +1,6 @@
 {
   "name": "nocalhost",
-  "version": "0.6.16-alpha.da5d0ea",
+  "version": "0.6.18-alpha.2cbd047",
   "displayName": "Nocalhost",
   "description": "Makes developing with Kubernetes feel like on local. IDE tool for cloud-native development",
   "license": "Apache-2.0",
@@ -23,7 +23,7 @@
     "debugger"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "*"
   ],
   "extensionKind": [
     "workspace"
