@@ -3,7 +3,7 @@ import * as os from "os";
 import * as path from "path";
 import * as yaml from "yaml";
 
-import { SIGN_IN, START_DEV_MODE, DEBUG } from "../commands/constants";
+import { RUN, SIGN_IN, START_DEV_MODE, DEBUG } from "../commands/constants";
 import { BaseNocalhostNode } from "../nodes/types/nodeType";
 import { DevSpaceNode } from "../nodes/DevSpaceNode";
 import NocalhostAppProvider from "../appProvider";
@@ -117,7 +117,7 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
 
       switch (action) {
         case "run":
-          vscode.commands.executeCommand(START_DEV_MODE, targetWorkloadNode); // Enter dev mode.
+          vscode.commands.executeCommand(RUN, targetWorkloadNode); // Enter dev mode.
           break;
 
         case "debug":
