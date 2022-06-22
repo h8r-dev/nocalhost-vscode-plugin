@@ -39,7 +39,6 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
   }
 
   private _webviewView: vscode.WebviewView;
-
   resolveWebviewView(
     webviewView: vscode.WebviewView,
     _: vscode.WebviewViewResolveContext,
@@ -59,6 +58,7 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage(
       async (data: { data: any; type: string }) => {
         const { type } = data;
+
         switch (type) {
           case "connectServer": {
             vscode.commands.executeCommand(SIGN_IN, data.data);
@@ -95,7 +95,6 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
             });
             break;
           }
-
           case "initKubePath": {
             const payload = data.data ?? {};
 
@@ -124,7 +123,6 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
             });
             break;
           }
-
           case "checkKubeconfig":
             this.checkKubeconfig(type, data.data, webviewView);
             break;
@@ -155,7 +153,7 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
     );
   }
 
-  public async getKubeconfig(data: {
+  private async getKubeconfig(data: {
     currentContext?: string;
     strKubeconfig?: string;
     namespace?: string;
@@ -174,12 +172,6 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
       }
     }
 
-    let clusterName = "";
-    if (strKubeconfig) {
-      const parsedKubeconfig = yaml.parse(strKubeconfig);
-      clusterName = parsedKubeconfig.clusters[0].name;
-    }
-
     if (kubeconfig) {
       if (namespace) {
         const context = kubeconfig.contexts?.find(
@@ -195,14 +187,7 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
       }
     }
 
-    return {
-      kubeconfig,
-      currentContext,
-      namespace,
-      path,
-      strKubeconfig,
-      clusterName,
-    };
+    return { kubeconfig, currentContext, namespace, path, strKubeconfig };
   }
 
   private async checkKubeconfig(
