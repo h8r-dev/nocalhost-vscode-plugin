@@ -51,8 +51,9 @@ export default class AutoStartDevModeCommand implements ICommand {
   }
 
   async execCommand(data: DataType, appTreeProvider?: NocalhostAppProvider) {
-    const { connectionInfo, application, workloadType, workload, action } =
-      data;
+    const {
+      connectionInfo, application, workloadType, workload, action,
+    } = data;
 
     host.showProgressing("Adding cluster...", async () => {
       let { kubeconfig, clusterName } = await this.getKubeconfig(
@@ -117,11 +118,15 @@ export default class AutoStartDevModeCommand implements ICommand {
 
       switch (action) {
         case "run":
-          vscode.commands.executeCommand(RUN, targetWorkloadNode); // Enter dev mode.
+          vscode.commands.executeCommand(RUN, targetWorkloadNode, {
+            isAutoMode: true,
+          }); // Enter dev mode.
           break;
 
         case "debug":
-          vscode.commands.executeCommand(DEBUG, targetWorkloadNode); // Enter debug mode.
+          vscode.commands.executeCommand(DEBUG, targetWorkloadNode, {
+            isAutoMode: true,
+          }); // Enter debug mode.
           break;
 
         default:

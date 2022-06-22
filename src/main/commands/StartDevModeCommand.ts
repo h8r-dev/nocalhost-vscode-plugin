@@ -59,6 +59,7 @@ type StartDevModeInfoType = {
   mode?: "replace" | "copy";
   header?: string;
   command?: string;
+  isAutoMode?: boolean;
 };
 export default class StartDevModeCommand implements ICommand {
   command: string = START_DEV_MODE;
@@ -405,13 +406,18 @@ export default class StartDevModeCommand implements ICommand {
       }
     };
 
-    // const result = await host.showInformationMessage(
-    //   nls["tips.open"],
-    //   { modal: true },
-    //   nls["bt.open.dir"],
-    //   nls["bt.open.other"]
-    // );
-    const result = nls["bt.open.dir"];
+    let result = null
+    if (this.info.isAutoMode) {
+      result = nls["bt.open.dir"];
+    } else {
+      result = await host.showInformationMessage(
+        nls["tips.open"],
+        { modal: true },
+        nls["bt.open.dir"],
+        nls["bt.open.other"]
+      );
+    }
+
     if (result === nls["bt.open.other"]) {
       await getUrl();
     } else if (result === nls["bt.open.dir"]) {
@@ -458,15 +464,19 @@ export default class StartDevModeCommand implements ICommand {
     const currentUri = host.getCurrentRootPath();
 
     if (!associateDir) {
-      destDir = await this.cloneCode(
-        host,
-        node.getKubeConfigPath(),
-        node.getNameSpace(),
-        appName,
-        node.name,
-        node.resourceType,
-        containerName
-      );
+      if (this.info.isAutoMode) {
+        destDir = await this.cloneCode(
+          host,
+          node.getKubeConfigPath(),
+          node.getNameSpace(),
+          appName,
+          node.name,
+          node.resourceType,
+          containerName
+        );
+      } else {
+        destDir = await this.firstOpen(appName, node, containerName);
+      }
     } else if (currentUri !== associateDir) {
       destDir = await this.getTargetDirectory();
     } else {
