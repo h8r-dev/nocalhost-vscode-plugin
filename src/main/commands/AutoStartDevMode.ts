@@ -158,7 +158,7 @@ export default class AutoStartDevModeCommand implements ICommand {
       logger.error("getKubeconfig yaml parse", error);
     }
 
-    const clusterName = kubeconfig.clusters[0].name;
+    const clusterName = kubeconfig?.clusters[0]?.name;
 
     return {
       kubeconfig: kubeconfig as IKubeconfig,
