@@ -3,10 +3,7 @@ import * as os from "os";
 import * as path from "path";
 import * as yaml from "yaml";
 
-import { RUN, SIGN_IN, START_DEV_MODE, DEBUG } from "../commands/constants";
-import { BaseNocalhostNode } from "../nodes/types/nodeType";
-import { DevSpaceNode } from "../nodes/DevSpaceNode";
-import NocalhostAppProvider from "../appProvider";
+import { SIGN_IN } from "../commands/constants";
 import { NocalhostRootNode } from "../nodes/NocalhostRootNode";
 
 import { LocalCluster } from "../clusters";
@@ -42,93 +39,6 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
   }
 
   private _webviewView: vscode.WebviewView;
-
-  /**
-   * Handle: Add_Cluster -> Locate workload node in tree view -> Enter dev mode | Enter debug mode
-   */
-  public handleDevelopApp(
-    data: any,
-    appTreeProvider: NocalhostAppProvider,
-    appTreeView: vscode.TreeView<BaseNocalhostNode>
-  ) {
-    const { connectionInfo, application, workloadType, workload, action } =
-      data;
-
-    host.showProgressing("Adding cluster ...", async () => {
-      let { kubeconfig, clusterName } = await this.getKubeconfig(
-        connectionInfo
-      );
-
-      let newLocalCluster = await LocalCluster.appendLocalClusterByKubeConfig(
-        kubeconfig
-      );
-
-      if (newLocalCluster) {
-        await LocalCluster.getLocalClusterRootNode(newLocalCluster);
-
-        const node = state.getNode(NOCALHOST) as NocalhostRootNode;
-
-        // Add Cluster
-        node && (await node.addCluster(newLocalCluster));
-
-        // Refresh UI
-        await state.refreshTree(true);
-
-        vscode.window.showInformationMessage("Success");
-      }
-
-      // Locate workload node.
-      const targetWorkloadNode: BaseNocalhostNode = await host.withProgress(
-        {
-          title: `Entering ${action} mode...`,
-          cancellable: true,
-        },
-        async (_, token) => {
-          const searchPath = [
-            clusterName,
-            connectionInfo.namespace,
-            application,
-            "Workloads",
-            workloadType + "s",
-            workload,
-          ];
-          return searchPath.reduce(async (parent, label) => {
-            if (token.isCancellationRequested) {
-              return null;
-            }
-
-            const children = await (await parent).getChildren();
-
-            const child = children.find((item: any) => {
-              if (item instanceof DevSpaceNode) {
-                return item.info.namespace === label.toLowerCase();
-              }
-              return item.label.toLowerCase() === label.toLowerCase();
-            });
-
-            return child;
-          }, Promise.resolve(appTreeProvider as Pick<BaseNocalhostNode, "getChildren">));
-        }
-      );
-
-      // Reveal node in tree view.
-      const nodeStateId = state.getNode(targetWorkloadNode.getNodeStateId());
-      await appTreeView.reveal(nodeStateId);
-
-      switch (action) {
-        case "run":
-          vscode.commands.executeCommand(RUN, targetWorkloadNode); // Enter dev mode.
-          break;
-
-        case "debug":
-          vscode.commands.executeCommand(DEBUG, targetWorkloadNode); // Enter debug mode.
-          break;
-
-        default:
-          break;
-      }
-    });
-  }
 
   resolveWebviewView(
     webviewView: vscode.WebviewView,
