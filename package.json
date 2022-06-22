@@ -23,7 +23,7 @@
     "debugger"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "*"
   ],
   "extensionKind": [
     "workspace"
