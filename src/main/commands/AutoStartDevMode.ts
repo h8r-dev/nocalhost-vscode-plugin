@@ -8,7 +8,8 @@ import * as yaml from "yaml";
 import host from "../host";
 import { appTreeView } from "../extension";
 import NocalhostAppProvider from "../appProvider";
-import { LocalCluster, LocalClusterNode } from "../clusters";
+import { LocalCluster } from "../clusters";
+import { LocalClusterNode } from "../clusters/LocalCuster";
 import state from "../state";
 import { NOCALHOST } from "../constants";
 import { NocalhostRootNode } from "../nodes/NocalhostRootNode";
@@ -51,9 +52,8 @@ export default class AutoStartDevModeCommand implements ICommand {
   }
 
   async execCommand(data: DataType, appTreeProvider?: NocalhostAppProvider) {
-    const {
-      connectionInfo, application, workloadType, workload, action,
-    } = data;
+    const { connectionInfo, application, workloadType, workload, action } =
+      data;
 
     host.showProgressing("Adding cluster...", async () => {
       let { kubeconfig, clusterName } = await this.getKubeconfig(
@@ -65,7 +65,7 @@ export default class AutoStartDevModeCommand implements ICommand {
       );
 
       if (newLocalCluster) {
-        await this.addNewCluster(newLocalCluster)
+        await this.addNewCluster(newLocalCluster);
       }
 
       // Locate workload node in tree view.
@@ -82,7 +82,12 @@ export default class AutoStartDevModeCommand implements ICommand {
           title: `Entering ${action} mode...`,
           cancellable: true,
         },
-        this.locateWorkerloadNode(searchPath)
+        async (_, token) => {
+          const rootNode = Promise.resolve(
+            appTreeProvider as Pick<BaseNocalhostNode, "getChildren">
+          );
+          return this.locateWorkerloadNode(token, rootNode, searchPath);
+        }
       );
 
       // Reveal node in tree view.
@@ -90,32 +95,39 @@ export default class AutoStartDevModeCommand implements ICommand {
       await appTreeView.reveal(nodeStateId);
 
       // Enter different dev modes.
-      switch (action) {
-        case "run":
-          vscode.commands.executeCommand(RUN, targetWorkloadNode, {
-            isAutoMode: true,
-          }); // Enter dev mode.
-          break;
-
-        case "debug":
-          vscode.commands.executeCommand(DEBUG, targetWorkloadNode, {
-            isAutoMode: true,
-          }); // Enter debug mode.
-          break;
-
-        default:
-          break;
-      }
+      this.enterDevModes(action, targetWorkloadNode);
     });
   }
 
-  private async addNewCluster(rootNode: LocalClusterNode) {
-    await LocalCluster.getLocalClusterRootNode(newLocalCluster);
+  private enterDevModes(
+    action: "debug" | "run",
+    targetWorkloadNode: BaseNocalhostNode
+  ): void {
+    switch (action) {
+      case "run":
+        vscode.commands.executeCommand(RUN, targetWorkloadNode, {
+          isAutoMode: true,
+        }); // Enter dev mode.
+        break;
+
+      case "debug":
+        vscode.commands.executeCommand(DEBUG, targetWorkloadNode, {
+          isAutoMode: true,
+        }); // Enter debug mode.
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  private async addNewCluster(clusterNode: LocalClusterNode) {
+    await LocalCluster.getLocalClusterRootNode(clusterNode);
 
     const node = state.getNode(NOCALHOST) as NocalhostRootNode;
 
     // Add Cluster
-    node && (await node.addCluster(newLocalCluster));
+    node && (await node.addCluster(clusterNode));
 
     // Refresh UI
     await state.refreshTree(true);
@@ -123,33 +135,34 @@ export default class AutoStartDevModeCommand implements ICommand {
     vscode.window.showInformationMessage("Success add cluster");
   }
 
-  private async locateWorkerloadNode(searchPath: string[]) {
-    return async (_, token) => {
-      const rootNode = Promise.resolve(appTreeProvider as Pick<BaseNocalhostNode, "getChildren">)
-      return searchPath.reduce(async (parent, label) => {
-        if (token.isCancellationRequested) {
-          return null;
+  private async locateWorkerloadNode(
+    token: vscode.CancellationToken,
+    rootNode: any,
+    searchPath: string[]
+  ) {
+    return searchPath.reduce(async (parent, label) => {
+      if (token.isCancellationRequested) {
+        return null;
+      }
+
+      const children = await (await parent).getChildren();
+
+      const child = children.find((item: any) => {
+        if (item instanceof DevSpaceNode) {
+          return item.info.namespace === label.toLowerCase();
         }
+        return item.label.toLowerCase() === label.toLowerCase();
+      });
 
-        const children = await (await parent).getChildren();
-
-        const child = children.find((item: any) => {
-          if (item instanceof DevSpaceNode) {
-            return item.info.namespace === label.toLowerCase();
-          }
-          return item.label.toLowerCase() === label.toLowerCase();
-        });
-
-        return child;
-      }, rootNode);
-    }
+      return child;
+    }, rootNode);
   }
 
   private async getKubeconfig(data: {
     strKubeconfig?: string;
     namespace?: string;
   }) {
-    const { strKubeconfig, namespace } = data;
+    const { strKubeconfig } = data;
     let kubeconfig;
 
     try {
