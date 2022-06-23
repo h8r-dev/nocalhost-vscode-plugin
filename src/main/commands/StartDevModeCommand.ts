@@ -406,8 +406,8 @@ export default class StartDevModeCommand implements ICommand {
       }
     };
 
-    let result = null
-    if (this.info.isAutoMode) {
+    let result = null;
+    if (this.info?.isAutoMode) {
       result = nls["bt.open.dir"];
     } else {
       result = await host.showInformationMessage(
@@ -464,7 +464,7 @@ export default class StartDevModeCommand implements ICommand {
     const currentUri = host.getCurrentRootPath();
 
     if (!associateDir) {
-      if (this.info.isAutoMode) {
+      if (this.info?.isAutoMode) {
         destDir = await this.cloneCode(
           host,
           node.getKubeConfigPath(),

@@ -41,7 +41,7 @@ export default class RunCommand implements ICommand {
   async execCommand(...rest: any[]) {
     const [node, param] = rest as [
       ControllerResourceNode,
-      { command: string, isAutoMode?: boolean } | undefined
+      { command: string; isAutoMode?: boolean } | undefined
     ];
 
     if (!node) {
@@ -51,7 +51,7 @@ export default class RunCommand implements ICommand {
 
     this.node = node;
     this.container = await getContainer(node);
-    this.isAutoMode = param?.isAutoMode;
+    this.isAutoMode = param?.isAutoMode || false;
 
     this.validateRunConfig(this.container);
 
