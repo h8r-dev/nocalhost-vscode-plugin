@@ -1,6 +1,6 @@
 {
   "name": "forkmain",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "displayName": "ForkMain",
   "description": "Makes developing with Kubernetes feel like on local. IDE tool for cloud-native development",
   "license": "Apache-2.0",
@@ -64,7 +64,7 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "icon": "images/logo.svg",
+          "icon": "images/forkmain-logo.png",
           "id": "NocalhostView",
           "title": "ForkMain"
         }
