@@ -289,7 +289,7 @@ export default class NocalhostWebviewPanel {
       <!DOCTYPE html>
       <html lang="en">
         <head>
-          <title>Nocalhost</title>
+          <title>ForkMain</title>
           <meta charset="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <link id="syntax-theme" type="text/css" rel="stylesheet" data-light="${lightCss}" data-dark="${darkCss}" href="${darkCss}" />

@@ -251,6 +251,7 @@ export class Host implements vscode.Disposable {
       }
     });
   }
+
   openExternal(url: string) {
     const uri = vscode.Uri.parse(url);
     vscode.env.openExternal(uri);

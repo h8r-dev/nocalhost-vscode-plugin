@@ -1,25 +1,14 @@
 import React from "react";
-import { postMessage } from "../../utils";
-import { MessageActionType, Commands } from "../../constants";
 
 const Welcome: React.FC = () => {
-  const onSignIn = (data: string) => {
-    postMessage({
-      type: MessageActionType.executeCommand,
-      payload: {
-        command: Commands.homeWebView,
-        data: { command: Commands.connect, data },
-      },
-    });
-  };
   return (
     <>
       <article className="markdown-body">
         <h2 className="atx" id="welcome-to-nocalhost">
-          Welcome to Nocalhost
+          Welcome to ForkMain
         </h2>
         <p>
-          Nocalhost is an open-source IDE plugin for cloud-native applications
+          ForkMain is an open-source IDE plugin for cloud-native applications
           development:
         </p>
         <p>
@@ -33,52 +22,10 @@ const Welcome: React.FC = () => {
           containers.
         </p>
         <h3 className="atx" id="how-to-use">
-          How to use
+          QuickStart
         </h3>
-        <p>You can use Nocalhost in two ways:</p>
-        <ul>
-          <li>
-            One is to provide a kubeconfig of a K8s cluster. Our minimum
-            requirement for RBAC is the&nbsp;
-            <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/">
-              edit
-            </a>
-            &nbsp; of a namespace. After adding a kubeconfig, you can experience
-            the functions of nocalhost through&nbsp;
-            <a href="https://nocalhost.dev/docs/quick-start">quick start</a>.
-          </li>
-        </ul>
-        <p>
-          <strong onClick={onSignIn.bind(null, "local")}>
-            <a href="javascript;">Experience through kubeconfig</a>
-          </strong>
-        </p>
-        <ul>
-          <li>
-            The second is to log in through the Nocalhost Server account
-            provided by the Nocalhost Server administrator of the privatized
-            deployment. After logging in, you can still experience the functions
-            of nocalhost through&nbsp;
-            <a href="https://nocalhost.dev/docs/quick-start/#2-connect-to-kubernetes-cluster">
-              quick start
-            </a>
-          </li>
-        </ul>
-        <p>
-          <strong onClick={onSignIn.bind(null, "server")}>
-            <a href="javascript;">
-              Experience through Nocalhost Server account
-            </a>
-          </strong>
-        </p>
-        <p>
-          Nocalhost Server can help you better manage your K8s cluster,
-          applications, personnel and permissions. To learn how to deploy
-          Nocalhost Server, you can click&nbsp;
-          <a href="https://nocalhost.dev/docs/server/server-overview">
-            Nocalhost Server Overview
-          </a>
-        </p>
+        <p>Click <em>LogIn</em> button, then you will be redirected to dashboard of ForkMain website.</p>
+        <p>Next, click <em>Debug</em> button of your application panel to begin the travel.</p>
       </article>
     </>
   );

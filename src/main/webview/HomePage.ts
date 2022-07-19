@@ -60,6 +60,11 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
         const { type } = data;
 
         switch (type) {
+          case "loginForkMain": {
+            const payload = data.data ?? {};
+            host.openExternal(payload.url);
+            break;
+          }
           case "connectServer": {
             vscode.commands.executeCommand(SIGN_IN, data.data);
             break;
@@ -240,7 +245,6 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
 			<link href="${styleResetUri}" rel="stylesheet">
 			<link href="${styleVSCodeUri}" rel="stylesheet">
 			<link href="${styleMainUri}" rel="stylesheet">
-			
 			<title>Home</title>
 		</head>
 		<body>

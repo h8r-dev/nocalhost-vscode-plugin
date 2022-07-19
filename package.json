@@ -20,7 +20,9 @@
     "Kubernetes",
     "cloud-native",
     "cloud",
-    "debugger"
+    "debugger",
+    "microservices",
+    "application"
   ],
   "activationEvents": [
     "*"
@@ -86,7 +88,7 @@
         },
         {
           "id": "Nocalhost.Home",
-          "name": "Nocalhost",
+          "name": "",
           "type": "webview",
           "when": "extensionActivated && !Nocalhost.visibleTree"
         }
@@ -110,38 +112,7 @@
       }
     ],
     "menus": {
-      "view/title": [
-        {
-          "command": "Nocalhost.refresh",
-          "when": "extensionActivated && !refreshing && view == Nocalhost",
-          "group": "navigation"
-        },
-        {
-          "command": "Nocalhost.refreshing",
-          "when": "extensionActivated && refreshing && view == Nocalhost",
-          "group": "navigation"
-        },
-        {
-          "command": "Nocalhost.ClustersView",
-          "when": "extensionActivated && !Nocalhost.visibleTree",
-          "group": "navigation"
-        },
-        {
-          "command": "Nocalhost.LocateWorkNode",
-          "when": "extensionActivated && view == Nocalhost",
-          "group": "navigation"
-        },
-        {
-          "command": "Nocalhost.addKubeconfig",
-          "when": "extensionActivated && view == Nocalhost",
-          "group": "navigation"
-        },
-        {
-          "command": "Nocalhost.syncManage.refresh",
-          "when": "view == NocalhostSyncManage",
-          "group": "navigation"
-        }
-      ],
+      "view/title": [],
       "view/item/context": [
         {
           "command": "Nocalhost.openProject",
@@ -673,7 +644,7 @@
     "eslint-plugin-jsx-a11y": "^6.4.1",
     "eslint-plugin-react": "^7.21.5",
     "eslint-plugin-react-hooks": "^4.2.0",
-    "husky": "^4.3.0",
+    "husky": "^4.3.8",
     "lint-staged": "^11.1.2",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.2.0",
