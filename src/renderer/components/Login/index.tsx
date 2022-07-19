@@ -8,7 +8,7 @@ const LoginComp: React.FC<LoginProps> = (props) => {
     postMessage({
       type: "loginForkMain",
       data: {
-        url: "https://forkmain.com/sign-in?from=IDEExtension",
+        url: "/sign-in?from=IDEExtension",
       },
     });
   }
