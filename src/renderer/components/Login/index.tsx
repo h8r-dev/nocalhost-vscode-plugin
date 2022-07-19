@@ -1,9 +1,7 @@
-import React, { useState } from "react";
-import vscode, { postMessage } from "../../utils/index";
+import React from "react";
+import { postMessage } from "../../utils/index";
 
-interface LoginProps {
-
-}
+interface LoginProps { }
 
 const LoginComp: React.FC<LoginProps> = (props) => {
   function openForkMain() {
