@@ -59,15 +59,17 @@ import { activateNocalhostDebug } from "./debug/nocalhost";
 // The example uses the file message format.
 nls.config({ messageFormat: nls.MessageFormat.file })();
 
-let envVariables = {
-  FORKMAIN_URL: 'http://localhost:8000',
+const envVariables: any = {
+  FORKMAIN_URL: "http://localhost",
 };
 
-if (process.env.NODE_ENV === 'production') {
-  envVariables.FORKMAIN_URL = 'https://forkmain.com';
+if (process.env.NODE_ENV === "production") {
+  envVariables.FORKMAIN_URL = "https://forkmain.com";
 }
 
-Object.keys(envVariables).forEach((key) => process.env[key] = envVariables[key]);
+Object.keys(envVariables).forEach(
+  (key: string) => (process.env[key] = envVariables[key])
+);
 
 export let appTreeView: vscode.TreeView<BaseNocalhostNode> | null | undefined;
 

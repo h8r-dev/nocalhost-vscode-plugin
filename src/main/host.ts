@@ -8,9 +8,8 @@ import {
 
 import { RemoteGlobalMemento } from "./utils/remoteGlobalMemento";
 export class Host implements vscode.Disposable {
-  private outputChannel: vscode.OutputChannel = vscode.window.createOutputChannel(
-    "Nocalhost"
-  );
+  private outputChannel: vscode.OutputChannel =
+    vscode.window.createOutputChannel("Nocalhost");
   public statusBar = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
     100
@@ -324,6 +323,7 @@ export class Host implements vscode.Disposable {
   ) {
     return vscode.window.createTerminal(options);
   }
+
   log(msg: string, line?: boolean) {
     if (line) {
       this.outputChannel.appendLine(msg);
