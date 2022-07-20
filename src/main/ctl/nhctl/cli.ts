@@ -62,6 +62,7 @@ export class NhctlCommand {
   ) {
     this.baseCommand = `${NH_BIN_NHCTL} ${base || ""}`;
   }
+
   static create(
     base: string,
     baseParams?: IBaseCommand<unknown>,
@@ -70,6 +71,7 @@ export class NhctlCommand {
   ) {
     return new NhctlCommand(base, baseParams, execParam, args);
   }
+
   static get(
     baseParams?: IBaseCommand<unknown>,
     ms = GLOBAL_TIMEOUT,
@@ -80,6 +82,7 @@ export class NhctlCommand {
 
     return command;
   }
+
   static dev(
     baseParams?: IBaseCommand<unknown>,
     execParam: Omit<ExecParam, "command"> = {},
@@ -90,6 +93,7 @@ export class NhctlCommand {
 
     return command;
   }
+
   static kExec(baseParams?: IBaseCommand<{ args?: string[] }>) {
     const command = NhctlCommand.create("k exec", baseParams);
     command.args = baseParams.args ?? [];

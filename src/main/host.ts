@@ -183,6 +183,7 @@ export class Host implements vscode.Disposable {
   public showInputBox(options: vscode.InputBoxOptions) {
     return vscode.window.showInputBox(options);
   }
+
   public showInputBoxIgnoreFocus(options: vscode.InputBoxOptions) {
     options.ignoreFocusOut = true;
 
