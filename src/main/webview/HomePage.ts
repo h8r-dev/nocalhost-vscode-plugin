@@ -64,7 +64,14 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
           case "loginForkMain": {
             const payload = data.data ?? {};
             const baseUrl = process.env.FORKMAIN_URL;
-            host.openExternal(baseUrl + payload.url);
+            // host.openExternal(baseUrl + payload.url);
+
+            webviewView.webview.postMessage({
+              userProfile: {
+                name: "chenyuan123",
+              },
+            });
+
             break;
           }
           case "connectServer": {

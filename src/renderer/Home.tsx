@@ -1,24 +1,30 @@
-import React, { useState } from "react";
-import { getState, setState } from "./utils/index";
-import i18n from "./i18n";
+import React, { useEffect, useState } from "react";
+// import { getState, setState } from "./utils/index";
 
 import LoginComp from "./components/Login";
-
-const STATE_KEY = "navTab";
+import ApplicationComp from "./components/Application";
+import AccountComp from "./components/Account";
 
 export default function Home() {
-  const [navTab, setNavTab] = useState<string>(
-    getState<string>(STATE_KEY) || "local"
-  );
+  const [userProfile, setUserProfile] = useState(null);
 
-  const handleChange = (newValue: string) => {
-    setNavTab(newValue);
-    setState(STATE_KEY, newValue);
-  };
+  useEffect(() => {
+    window.addEventListener("message", (event) => {
+      const message = event.data;
+      setUserProfile(message.userProfile);
+    });
+  }, []);
 
   return (
     <div>
-      <LoginComp />
+      {userProfile ? (
+        <div>
+          <AccountComp profile={userProfile} />
+          <ApplicationComp app={{ name: "abc123" }} />
+        </div>
+      ) : (
+        <LoginComp />
+      )}
     </div>
   );
 }
