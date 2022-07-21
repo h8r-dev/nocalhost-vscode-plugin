@@ -1,3 +1,7 @@
+/**
+ * Rendered on an tab by Webview Panel
+ */
+
 import React from "react";
 import { render } from "react-dom";
 import App from "./App";

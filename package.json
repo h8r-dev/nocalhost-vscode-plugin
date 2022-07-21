@@ -43,7 +43,7 @@
   "contributes": {
     "configuration": [
       {
-        "title": "Nocalhost",
+        "title": "ForkMain",
         "properties": {
           "nocalhost.checkNhctlVersion": {
             "type": "string",
@@ -67,7 +67,7 @@
       "activitybar": [
         {
           "icon": "images/forkmain-logo.png",
-          "id": "NocalhostView",
+          "id": "ForkMainView",
           "title": "ForkMain"
         }
       ]
@@ -79,18 +79,18 @@
           "name": "Nocalhost Sync Manage"
         }
       ],
-      "NocalhostView": [
+      "ForkMainView": [
         {
           "id": "Nocalhost",
           "name": "Nocalhost",
           "type": "tree",
-          "when": "nhctl.upgrade || extensionActivated && Nocalhost.visibleTree"
+          "when": "!extensionActivated"
         },
         {
           "id": "Nocalhost.Home",
           "name": "",
           "type": "webview",
-          "when": "extensionActivated && !Nocalhost.visibleTree"
+          "when": "extensionActivated"
         }
       ]
     },

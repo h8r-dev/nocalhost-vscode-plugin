@@ -19,6 +19,7 @@ export default class RefreshCommand implements ICommand {
     this.provider = provider;
     registerCommand(context, this.command, false, this.execCommand.bind(this));
   }
+
   async execCommand(node?: BaseNocalhostNode) {
     if (!node) {
       vscode.commands.executeCommand("setContext", "refreshing", true);

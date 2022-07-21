@@ -53,6 +53,7 @@ export class Host implements vscode.Disposable {
   public getContext() {
     return this.context;
   }
+
   public setGlobalState(key: string, state: any) {
     if (!this.context) {
       throw new Error("not initialized extension");

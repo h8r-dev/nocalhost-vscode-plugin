@@ -1,3 +1,15 @@
+/**
+ * Render webview panel on center main area of vscode.
+ *
+ * Usage Examples:
+ *
+ * 1. Display container logs in an independent vscode tab.
+ * 2. Render markdown content.
+ * 3. Render k8s manifest.
+ * 4. View forkmain configuration content of the service.
+ *
+ */
+
 import * as path from "path";
 import * as vscode from "vscode";
 import * as qs from "qs";
@@ -36,6 +48,40 @@ export default class NocalhostWebviewPanel {
   private disposeHandlerStack: CallableStack = new CallableStack();
   private activeHandlerStack: CallableStack = new CallableStack();
   private inactiveHandlerStack: CallableStack = new CallableStack();
+
+  private constructor(id: number, url: string, panel: vscode.WebviewPanel) {
+    this.id = id;
+    this.url = url;
+    this.openStack.push(url);
+    this.panel = panel;
+    this.panel.onDidDispose(() => this.didDispose(), null, this.disposables);
+    this.panel.onDidChangeViewState(
+      () => this.viewChange(),
+      null,
+      this.disposables
+    );
+    this.panel.webview.onDidReceiveMessage(
+      (message: IMessage) => {
+        NocalhostWebviewPanel.messageManager.notify(message, id);
+      },
+      null,
+      this.disposables
+    );
+
+    process.nextTick(this.update.bind(this));
+
+    NocalhostWebviewPanel.addMessageListener(({ type }, id) => {
+      if (type === "init" && id === this.id) {
+        NocalhostWebviewPanel.postMessage(
+          {
+            type: "location/redirect",
+            payload: { url },
+          },
+          this.id
+        );
+      }
+    });
+  }
 
   public static open(props: IWebviewOpenProps) {
     let url: string = props.url;
@@ -142,13 +188,17 @@ export default class NocalhostWebviewPanel {
       }
     );
 
-    webviewPanel.iconPath = resolveExtensionFilePath("images", "logo.svg");
+    webviewPanel.iconPath = resolveExtensionFilePath(
+      "images",
+      "forkmain-logo.png"
+    );
 
     const panel: NocalhostWebviewPanel = new NocalhostWebviewPanel(
       id,
       url,
       webviewPanel
     );
+
     NocalhostWebviewPanel.panels.set(id, panel);
     NocalhostWebviewPanel.currentPanel = panel;
   }
@@ -196,40 +246,6 @@ export default class NocalhostWebviewPanel {
     }
   }
 
-  private constructor(id: number, url: string, panel: vscode.WebviewPanel) {
-    this.id = id;
-    this.url = url;
-    this.openStack.push(url);
-    this.panel = panel;
-    this.panel.onDidDispose(() => this.didDispose(), null, this.disposables);
-    this.panel.onDidChangeViewState(
-      () => this.viewChange(),
-      null,
-      this.disposables
-    );
-    this.panel.webview.onDidReceiveMessage(
-      (message: IMessage) => {
-        NocalhostWebviewPanel.messageManager.notify(message, id);
-      },
-      null,
-      this.disposables
-    );
-
-    process.nextTick(this.update.bind(this));
-
-    NocalhostWebviewPanel.addMessageListener(({ type }, id) => {
-      if (type === "init" && id === this.id) {
-        NocalhostWebviewPanel.postMessage(
-          {
-            type: "location/redirect",
-            payload: { url },
-          },
-          this.id
-        );
-      }
-    });
-  }
-
   private didDispose(): void {
     NocalhostWebviewPanel.panels.delete(this.id);
     if (NocalhostWebviewPanel.currentPanel === this) {
@@ -254,11 +270,13 @@ export default class NocalhostWebviewPanel {
       this.inactiveHandlerStack.exec();
     }
   }
+
   private getAppStatic(name: string) {
     return this.panel.webview.asWebviewUri(
       resolveExtensionFilePath("dist", "static", "app", name)
     );
   }
+
   private getHtml(): string {
     if (!this.panel) {
       return "";

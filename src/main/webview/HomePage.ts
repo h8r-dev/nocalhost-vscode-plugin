@@ -53,6 +53,7 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
       enableCommandUris: true,
       localResourceRoots: [this._extensionUri],
     };
+
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
     webviewView.webview.onDidReceiveMessage(
@@ -223,6 +224,7 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
       resolveExtensionFilePath("dist", "static", "home", name)
     );
   }
+
   private _getHtmlForWebview(webview: vscode.Webview) {
     // Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
     const bundlePath = webview.asWebviewUri(

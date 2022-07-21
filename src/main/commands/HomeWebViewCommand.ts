@@ -19,7 +19,7 @@ export default class HomeWebViewCommand implements ICommand {
       while (count++ < 2) {
         void (await vscode.commands.executeCommand("vscode.moveViews", {
           viewIds: [],
-          destinationId: "workbench.view.extension.NocalhostView",
+          destinationId: "workbench.view.extension.ForkMainView",
         }));
       }
     } catch {}

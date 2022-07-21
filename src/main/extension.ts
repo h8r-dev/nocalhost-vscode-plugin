@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import NocalhostAppProvider from "./appProvider";
+
 import {
   PLUGIN_TEMP_DIR,
   TMP_DEV_START_IMAGE,
@@ -30,7 +31,9 @@ import {
   NH_BIN,
   TMP_DEV_START_COMMAND,
   TMP_COMMAND,
+  PLUGIN_CONFIG_ACCOUNT_DIR,
 } from "./constants";
+
 import host from "./host";
 import NocalhostFileSystemProvider from "./fileSystemProvider";
 import state from "./state";
@@ -139,7 +142,7 @@ export async function activate(context: vscode.ExtensionContext) {
   if (!host.getGlobalState(WELCOME_DID_SHOW)) {
     NocalhostWebviewPanel.open({
       url: "/welcome",
-      title: "Welcome to Nocalhost",
+      title: "Welcome to ForkMain",
     });
     host.setGlobalState(WELCOME_DID_SHOW, true);
   }
@@ -387,6 +390,7 @@ export async function updateServerConfigStatus() {
 
 async function init(context: vscode.ExtensionContext) {
   await host.setContext(context);
+
   fileUtil.mkdir(NH_CONFIG_DIR);
   fileUtil.mkdir(PLUGIN_CONFIG_DIR);
   fileUtil.mkdir(PLUGIN_TEMP_DIR);
@@ -394,11 +398,17 @@ async function init(context: vscode.ExtensionContext) {
   fileUtil.mkdir(HELM_VALUES_DIR);
   fileUtil.mkdir(HELM_NH_CONFIG_DIR);
   fileUtil.mkdir(NH_BIN);
+
+  // Create accounts dir.
+  fileUtil.mkdir(PLUGIN_CONFIG_ACCOUNT_DIR);
+
   // fileStore.initConfig();
   host.setGlobalState("extensionPath", context.extensionPath);
   updateServerConfigStatus();
+
   await messageBus.init();
   await checkVersion();
+
   LocalClusterService.verifyLocalCluster();
 }
 

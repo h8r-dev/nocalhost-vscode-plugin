@@ -65,19 +65,22 @@ const Logs: React.FC = () => {
   const {
     state: { logs, theme },
   } = useContext(store);
+
   const history = useHistory();
   const search: string = history.location.search;
   const query: qs.ParsedQs = qs.parse(search, {
     ignoreQueryPrefix: true,
   });
-  const elementRef: React.MutableRefObject<HTMLDivElement | null> = useRef(
-    null
-  );
+
+  const elementRef: React.MutableRefObject<HTMLDivElement | null> =
+    useRef(null);
+
   const classes = useStyles();
 
   const renderNoContent = () => (
     <div className={classes.noContent}>No Content.</div>
   );
+
   const renderList = () => {
     return (
       <>
@@ -99,6 +102,7 @@ const Logs: React.FC = () => {
       </>
     );
   };
+
   const renderSkeleton = () => (
     <div className={classes.skeletonContainer}>
       {new Array(7).fill("").map((item, i) => (
