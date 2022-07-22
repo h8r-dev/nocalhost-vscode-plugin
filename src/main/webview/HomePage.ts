@@ -38,6 +38,11 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
     this._isRegister = true;
   }
 
+  private open_forkmain_website(path: string): void {
+    const baseUrl = process.env.FORKMAIN_URL;
+    host.openExternal(baseUrl + path);
+  }
+
   private _webviewView: vscode.WebviewView;
   resolveWebviewView(
     webviewView: vscode.WebviewView,
@@ -63,8 +68,7 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
         switch (type) {
           case "loginForkMain": {
             const payload = data.data ?? {};
-            const baseUrl = process.env.FORKMAIN_URL;
-            // host.openExternal(baseUrl + payload.url);
+            // this.open_forkmain_website(payload.url)
 
             webviewView.webview.postMessage({
               userProfile: {
@@ -72,6 +76,11 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
               },
             });
 
+            break;
+          }
+          case "manageApp": {
+            const payload = data.data ?? {};
+            this.open_forkmain_website(payload.url);
             break;
           }
           case "connectServer": {

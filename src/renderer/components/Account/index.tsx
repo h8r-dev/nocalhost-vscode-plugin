@@ -13,7 +13,7 @@ const AccountComp: React.FC<AccountProps> = (props) => {
 
   return (
     <div className="forkmain-account">
-      <p>Welcome to ForkMain, {name}</p>
+      <p style={{ marginBottom: 10 }}>Welcome to ForkMain, {name}</p>
     </div>
   );
 };

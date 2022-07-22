@@ -5,11 +5,10 @@ import React from "react";
 import { postMessage } from "../../utils/index";
 
 interface ApplicationProps {
-  app: any
+  app: any;
 }
 
 const ApplicationComp: React.FC<ApplicationProps> = ({ app }) => {
-
   // TODO: replace with real data.
   const appId = 123;
   const organizationId = 345;
@@ -19,17 +18,14 @@ const ApplicationComp: React.FC<ApplicationProps> = ({ app }) => {
       type: "manageApp",
       data: {
         // TODO: Replace with real url here.
-        url: `https://forkmain.com/orgs/${organizationId}/app/${appId}`,
+        url: `/orgs/${organizationId}/app/${appId}`,
       },
     });
   }
 
   return (
     <div className="forkmain-app">
-      <button
-        title="Manage Your Application"
-        onClick={manageApp}
-      >
+      <button title="Manage Your Application" onClick={manageApp}>
         Manage Application
       </button>
     </div>

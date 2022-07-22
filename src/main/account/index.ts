@@ -32,6 +32,7 @@ interface ApplicationDetail {
   kubeconfig: string;
   workloadType: string;
   namespace: string;
+  environment: string;
 }
 
 const TOKEN_FILE = "token.txt";
@@ -94,6 +95,7 @@ export async function storeApplication(data: ApplicationDetail): Promise<void> {
                 action: data.action,
                 workloadType: data.workloadType,
                 namespace: data.namespace,
+                env: data.environment,
               },
             ],
           },
