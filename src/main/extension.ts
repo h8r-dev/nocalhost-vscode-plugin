@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import * as nls from "vscode-nls";
 
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
@@ -30,6 +31,7 @@ import {
   NH_BIN,
   TMP_DEV_START_COMMAND,
   TMP_COMMAND,
+  PLUGIN_CONFIG_PROJECTS_DIR,
 } from "./constants";
 import host from "./host";
 import NocalhostFileSystemProvider from "./fileSystemProvider";
@@ -43,18 +45,16 @@ import { checkVersion } from "./ctl/nhctl";
 import logger from "./utils/logger";
 import * as fileUtil from "./utils/fileUtil";
 import { KubernetesResourceFolder } from "./nodes/abstract/KubernetesResourceFolder";
-// import { registerYamlSchemaSupport } from "./yaml/yamlSchema";
 import messageBus, { EventType } from "./utils/messageBus";
 import LocalClusterService from "./clusters/LocalCuster";
 import { DevSpaceNode } from "./nodes/DevSpaceNode";
 import { HomeWebViewProvider } from "./webview/HomePage";
 import { unlock } from "./utils/download";
-// import DataCenter from "./common/DataCenter/index";
-import * as nls from "vscode-nls";
 import SyncServiceCommand from "./commands/sync/SyncServiceCommand";
 import { ShellExecError } from "./ctl/shell";
 import { createSyncManage } from "./component/syncManage";
 import { activateNocalhostDebug } from "./debug/nocalhost";
+
 // The example uses the file message format.
 nls.config({ messageFormat: nls.MessageFormat.file })();
 
@@ -374,6 +374,8 @@ export async function updateServerConfigStatus() {
 
 async function init(context: vscode.ExtensionContext) {
   await host.setContext(context);
+  fileUtil.mkdir(PLUGIN_CONFIG_PROJECTS_DIR);
+
   fileUtil.mkdir(NH_CONFIG_DIR);
   fileUtil.mkdir(PLUGIN_CONFIG_DIR);
   fileUtil.mkdir(PLUGIN_TEMP_DIR);
@@ -381,7 +383,7 @@ async function init(context: vscode.ExtensionContext) {
   fileUtil.mkdir(HELM_VALUES_DIR);
   fileUtil.mkdir(HELM_NH_CONFIG_DIR);
   fileUtil.mkdir(NH_BIN);
-  // fileStore.initConfig();
+
   host.setGlobalState("extensionPath", context.extensionPath);
   updateServerConfigStatus();
   await messageBus.init();

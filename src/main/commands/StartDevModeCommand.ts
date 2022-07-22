@@ -22,6 +22,7 @@ import {
   TMP_WORKLOAD,
   TMP_WORKLOAD_PATH,
   TMP_HEADER,
+  PLUGIN_CONFIG_PROJECTS_DIR,
 } from "../constants";
 import host, { Host } from "../host";
 import * as path from "path";
@@ -54,6 +55,7 @@ export interface ControllerNodeApi {
   getSpaceName: () => string;
   getNameSpace: () => string;
 }
+
 type StartDevModeInfoType = {
   image?: string;
   mode?: "replace" | "copy";
@@ -61,6 +63,16 @@ type StartDevModeInfoType = {
   command?: string;
   isAutoMode?: boolean;
 };
+
+const ValidWorkloadTypes: string[] = [
+  "Deployments",
+  "StatefuleSets",
+  "DaemonSets",
+  "Jobs",
+  "CronJobs",
+  "Pods",
+];
+
 export default class StartDevModeCommand implements ICommand {
   command: string = START_DEV_MODE;
   context: vscode.ExtensionContext;
@@ -92,17 +104,8 @@ export default class StartDevModeCommand implements ICommand {
     const namespace = node.getNameSpace();
     const kubeConfigPath = node.getKubeConfigPath();
 
-    // crd workload do not check
-    if (
-      [
-        "Deployments",
-        "StatefuleSets",
-        "DaemonSets",
-        "Jobs",
-        "CronJobs",
-        "Pods",
-      ].includes(node.resourceType)
-    ) {
+    // Do not check CRD workload.
+    if (ValidWorkloadTypes.includes(node.resourceType)) {
       await nhctl.NhctlCommand.authCheck({
         base: "dev",
         args: ["start", appName, "-t" + node.resourceType, node.name],
@@ -119,9 +122,7 @@ export default class StartDevModeCommand implements ICommand {
     host.log("[start dev] Initializing..", true);
 
     // get container name from storage
-
     let containerName = await node.getContainer();
-
     if (!containerName) {
       containerName = await getContainer({
         appName,
@@ -136,21 +137,20 @@ export default class StartDevModeCommand implements ICommand {
 
     this.containerName = containerName;
 
+    // Alert developer when multi developers are working on same service.
     if (containerName === "nocalhost-dev") {
-      let r = await host.showInformationMessage(
-        `This container is developing. You may have problem after enter DevMode at the same time. Do you want to continue?`,
-        { modal: true },
-        "confirm"
+      host.showErrorMessage(
+        "Error: The service is already under developing, exit."
       );
-      if (r !== "confirm") {
-        return;
-      }
+      return;
     }
+
     const destDir = await this.cloneOrGetFolderDir(
       appName,
       node,
       containerName
     );
+
     if (!destDir) {
       return;
     }
@@ -171,6 +171,7 @@ export default class StartDevModeCommand implements ICommand {
       "image",
       image as string
     );
+
     if (
       destDir === true ||
       (destDir && destDir === host.getCurrentRootPath())
@@ -216,6 +217,7 @@ export default class StartDevModeCommand implements ICommand {
       this.node.resourceType,
       containerName
     );
+
     if (!image) {
       const result = await host.showInformationMessage(
         "Please specify development image",
@@ -247,6 +249,7 @@ export default class StartDevModeCommand implements ICommand {
 
     return image;
   }
+
   private saveAndOpenFolder(
     appName: string,
     node: ControllerNodeApi,
@@ -281,7 +284,7 @@ export default class StartDevModeCommand implements ICommand {
     workloadName: string,
     wrokloadType: string,
     containerName: string
-  ) {
+  ): Promise<string | undefined> {
     let destDir: string | undefined;
     let gitUrl: string | undefined = await this.getGitUrl(
       kubeConfigPath,
@@ -291,43 +294,33 @@ export default class StartDevModeCommand implements ICommand {
       wrokloadType,
       containerName
     );
+
     if (!gitUrl) {
-      gitUrl = await host.showInputBox({
-        placeHolder: "please input your git url",
-      });
+      host.showErrorMessage("Error: No Git URL found on this service");
+      return destDir;
     }
-    if (gitUrl) {
-      vscode.window.showInformationMessage(
-        "Please select directory to clone your code"
-      );
-      const saveUris = await host.showOpenDialog({
-        canSelectFiles: false,
-        canSelectFolders: true,
-        canSelectMany: false,
-        title: "select save directory",
-      });
-      if (saveUris && saveUris.length > 0) {
-        destDir = path.resolve(saveUris[0].fsPath, workloadName);
-        await this.saveConfig(
-          kubeConfigPath,
-          namespace,
-          appName,
-          workloadName,
-          wrokloadType,
-          containerName,
-          "gitUrl",
-          gitUrl
-        );
-        await host.showProgressing("Starting DevMode", async (progress) => {
-          progress.report({
-            message: "cloning code",
-          });
-          await git.clone(host, gitUrl as string, [
-            replaceSpacePath(destDir) as string,
-          ]);
-        });
-      }
+
+    const baseDir = PLUGIN_CONFIG_PROJECTS_DIR;
+    destDir = path.resolve(baseDir, appName);
+
+    const [saveResult, cloneResult] = await Promise.all([
+      this.saveConfig(
+        kubeConfigPath,
+        namespace,
+        appName,
+        workloadName,
+        wrokloadType,
+        containerName,
+        "gitUrl",
+        gitUrl
+      ),
+      git.clone(host, gitUrl as string, [replaceSpacePath(destDir) as string]),
+    ]);
+
+    if (!cloneResult) {
+      return "";
     }
+
     return destDir;
   }
 

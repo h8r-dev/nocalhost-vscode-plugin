@@ -197,6 +197,7 @@ export default class DebugCommand implements ICommand {
       );
     }
   }
+
   getLanguage() {
     const {
       image,
