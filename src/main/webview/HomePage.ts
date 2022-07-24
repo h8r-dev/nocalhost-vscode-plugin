@@ -240,7 +240,7 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
 			<link href="${styleResetUri}" rel="stylesheet">
 			<link href="${styleVSCodeUri}" rel="stylesheet">
 			<link href="${styleMainUri}" rel="stylesheet">
-			
+
 			<title>Home</title>
 		</head>
 		<body>

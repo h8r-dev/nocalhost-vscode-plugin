@@ -301,7 +301,7 @@ export default class StartDevModeCommand implements ICommand {
     }
 
     const baseDir = PLUGIN_CONFIG_PROJECTS_DIR;
-    destDir = path.resolve(baseDir, appName);
+    destDir = path.resolve(baseDir, appName, workloadName);
 
     const [saveResult, cloneResult] = await Promise.all([
       this.saveConfig(
@@ -314,7 +314,11 @@ export default class StartDevModeCommand implements ICommand {
         "gitUrl",
         gitUrl
       ),
-      git.clone(host, gitUrl as string, [replaceSpacePath(destDir) as string]),
+      host.showProgressing("Starting DevMode", async (progress) => {
+        progress.report({ message: "Cloning source code..."})
+        const result = await git.clone(host, gitUrl as string, [replaceSpacePath(destDir) as string]);
+        return result;
+      }),
     ]);
 
     if (!cloneResult) {
@@ -346,45 +350,6 @@ export default class StartDevModeCommand implements ICommand {
     });
   }
 
-  private async firstOpen(
-    appName: string,
-    node: ControllerNodeApi,
-    containerName: string
-  ) {
-    let destDir: string | undefined;
-    const result = await host.showInformationMessage(
-      nls["tips.clone"],
-      { modal: true },
-      nls["bt.clone"],
-      nls["bt.open.dir"]
-    );
-    if (!result) {
-      return;
-    }
-    if (result === nls["bt.clone"]) {
-      destDir = await this.cloneCode(
-        host,
-        node.getKubeConfigPath(),
-        node.getNameSpace(),
-        appName,
-        node.name,
-        node.resourceType,
-        containerName
-      );
-    } else if (result === nls["bt.open.dir"]) {
-      const uris = await host.showOpenDialog({
-        canSelectFiles: false,
-        canSelectFolders: true,
-        canSelectMany: false,
-      });
-      if (uris && uris.length > 0) {
-        destDir = uris[0].fsPath;
-      }
-    }
-
-    return destDir;
-  }
-
   private async getTargetDirectory() {
     let destDir: string | undefined;
 
@@ -399,17 +364,7 @@ export default class StartDevModeCommand implements ICommand {
       }
     };
 
-    let result = null;
-    if (this.info?.isAutoMode) {
-      result = nls["bt.open.dir"];
-    } else {
-      result = await host.showInformationMessage(
-        nls["tips.open"],
-        { modal: true },
-        nls["bt.open.dir"],
-        nls["bt.open.other"]
-      );
-    }
+    const result = nls["bt.open.dir"];
 
     if (result === nls["bt.open.other"]) {
       await getUrl();
@@ -457,19 +412,15 @@ export default class StartDevModeCommand implements ICommand {
     const currentUri = host.getCurrentRootPath();
 
     if (!associateDir) {
-      if (this.info?.isAutoMode) {
-        destDir = await this.cloneCode(
-          host,
-          node.getKubeConfigPath(),
-          node.getNameSpace(),
-          appName,
-          node.name,
-          node.resourceType,
-          containerName
-        );
-      } else {
-        destDir = await this.firstOpen(appName, node, containerName);
-      }
+      destDir = await this.cloneCode(
+        host,
+        node.getKubeConfigPath(),
+        node.getNameSpace(),
+        appName,
+        node.name,
+        node.resourceType,
+        containerName
+      );
     } else if (currentUri !== associateDir) {
       destDir = await this.getTargetDirectory();
     } else {
