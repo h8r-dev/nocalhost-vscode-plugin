@@ -29,6 +29,7 @@ export default class EndDevModeCommand implements ICommand {
       node.name,
       node.resourceType
     );
+
     if (
       svcProfile?.possess === false &&
       svcProfile?.develop_status !== "STARTING"

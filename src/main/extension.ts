@@ -62,7 +62,7 @@ import { activateNocalhostDebug } from "./debug/nocalhost";
 nls.config({ messageFormat: nls.MessageFormat.file })();
 
 const envVariables: any = {
-  FORKMAIN_URL: "http://localhost",
+  FORKMAIN_URL: "http://localhost:3000",
 };
 
 if (process.env.NODE_ENV === "production") {

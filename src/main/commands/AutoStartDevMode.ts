@@ -15,7 +15,7 @@ import { NOCALHOST } from "../constants";
 import { NocalhostRootNode } from "../nodes/NocalhostRootNode";
 import { BaseNocalhostNode } from "../nodes/types/nodeType";
 import { DevSpaceNode } from "../nodes/DevSpaceNode";
-import { RUN, DEBUG } from "../commands/constants";
+import { RUN, DEBUG, END_DEV_MODE } from "../commands/constants";
 import { IKubeconfig } from "../ctl/nhctl";
 import logger from "../utils/logger";
 
@@ -68,6 +68,14 @@ export default class AutoStartDevModeCommand implements ICommand {
         await this.addNewCluster(newLocalCluster);
       }
 
+      host.showInformationMessage(
+        "Local workspace is initializing, view progress on forkmain website"
+      );
+
+      // Open page to display current progress.
+      const baseUrl = process.env.FORKMAIN_URL;
+      host.openExternal(baseUrl + "/docs/overview/intro");
+
       // Locate workload node in tree view.
       const searchPath = [
         clusterName,
@@ -100,7 +108,7 @@ export default class AutoStartDevModeCommand implements ICommand {
   }
 
   private enterDevModes(
-    action: "debug" | "run",
+    action: "debug" | "run" | "stop",
     targetWorkloadNode: BaseNocalhostNode
   ): void {
     switch (action) {
@@ -114,6 +122,12 @@ export default class AutoStartDevModeCommand implements ICommand {
         vscode.commands.executeCommand(DEBUG, targetWorkloadNode, {
           isAutoMode: true,
         }); // Enter debug mode.
+        break;
+
+      case "stop":
+        vscode.commands.executeCommand(END_DEV_MODE, targetWorkloadNode, {
+          isAutoMode: true,
+        }); // End dev mode.
         break;
 
       default:
