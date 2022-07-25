@@ -1,52 +1,30 @@
-import React, { useState } from "react";
-import NocalHostTab from "./components/Tab";
-import { getState, setState } from "./utils/index";
-import TabPanel from "./components/TabPanel";
-import LocalKubeConfig from "./components/LocalKubeConfig";
-import NocalHostServer from "./components/NocalHostServer";
-import i18n from "./i18n";
-import useMessage from "./hooks/vscode";
+import React, { useEffect, useState } from "react";
+// import { getState, setState } from "./utils/index";
 
-const options = [
-  {
-    label: i18n.t("connect2Cluster"),
-    value: "local",
-  },
-  {
-    label: i18n.t("connect2Server"),
-    value: "server",
-  },
-];
-
-const STATE_KEY = "navTab";
+import LoginComp from "./components/Login";
+import ApplicationComp from "./components/Application";
+import AccountComp from "./components/Account";
 
 export default function Home() {
-  const [navTab, setNavTab] = useState<string>(
-    getState<string>(STATE_KEY) || "local"
-  );
+  const [userProfile, setUserProfile] = useState(null);
 
-  const handleChange = (newValue: string) => {
-    setNavTab(newValue);
-    setState(STATE_KEY, newValue);
-  };
+  useEffect(() => {
+    window.addEventListener("message", (event) => {
+      const message = event.data;
+      setUserProfile(message.userProfile);
+    });
+  }, []);
 
-  useMessage("setNavTab", setNavTab);
   return (
     <div>
-      <div className="type">
-        <NocalHostTab
-          defaultValue="local"
-          options={options}
-          onChange={handleChange}
-          value={navTab}
-        />
-      </div>
-      <TabPanel value={navTab} name="local">
-        <LocalKubeConfig />
-      </TabPanel>
-      <TabPanel value={navTab} name="server">
-        <NocalHostServer />
-      </TabPanel>
+      {userProfile ? (
+        <div>
+          <AccountComp profile={userProfile} />
+          <ApplicationComp app={{ name: "abc123" }} />
+        </div>
+      ) : (
+        <LoginComp />
+      )}
     </div>
   );
 }

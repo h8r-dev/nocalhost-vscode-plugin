@@ -21,6 +21,12 @@ export const PLUGIN_CONFIG_PROJECTS_DIR = path.resolve(
   "projects"
 );
 
+// Store all login accounts.
+export const PLUGIN_CONFIG_ACCOUNT_DIR = path.resolve(
+  PLUGIN_CONFIG_DIR,
+  "accounts"
+);
+
 export const NHCTL_DIR = path.resolve(NH_CONFIG_DIR, "nhctl");
 export const NH_BIN = path.resolve(NH_CONFIG_DIR, "bin");
 export const NH_BIN_NHCTL = path.resolve(

@@ -8,9 +8,8 @@ import {
 
 import { RemoteGlobalMemento } from "./utils/remoteGlobalMemento";
 export class Host implements vscode.Disposable {
-  private outputChannel: vscode.OutputChannel = vscode.window.createOutputChannel(
-    "Nocalhost"
-  );
+  private outputChannel: vscode.OutputChannel =
+    vscode.window.createOutputChannel("Nocalhost");
   public statusBar = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
     100
@@ -54,6 +53,7 @@ export class Host implements vscode.Disposable {
   public getContext() {
     return this.context;
   }
+
   public setGlobalState(key: string, state: any) {
     if (!this.context) {
       throw new Error("not initialized extension");
@@ -184,6 +184,7 @@ export class Host implements vscode.Disposable {
   public showInputBox(options: vscode.InputBoxOptions) {
     return vscode.window.showInputBox(options);
   }
+
   public showInputBoxIgnoreFocus(options: vscode.InputBoxOptions) {
     options.ignoreFocusOut = true;
 
@@ -251,6 +252,7 @@ export class Host implements vscode.Disposable {
       }
     });
   }
+
   openExternal(url: string) {
     const uri = vscode.Uri.parse(url);
     vscode.env.openExternal(uri);
@@ -323,6 +325,7 @@ export class Host implements vscode.Disposable {
   ) {
     return vscode.window.createTerminal(options);
   }
+
   log(msg: string, line?: boolean) {
     if (line) {
       this.outputChannel.appendLine(msg);

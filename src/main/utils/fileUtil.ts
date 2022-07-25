@@ -37,6 +37,7 @@ export function readYamlSync(filePath: string) {
   }
   return yamlObj;
 }
+
 export async function readYaml<T = any>(filePath: string) {
   let yamlObj = null;
 
