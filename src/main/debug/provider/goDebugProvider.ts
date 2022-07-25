@@ -39,6 +39,7 @@ export class GoDebugProvider extends IDebugProvider {
       host: "127.0.0.1",
     };
   }
+
   async waitDebuggerStop() {
     try {
       await this.call("Command", [{ name: "halt" }]);
@@ -181,6 +182,7 @@ export class GoDebugProvider extends IDebugProvider {
       );
     });
   }
+
   private async connect(port: number) {
     if (this.socket && this.socket.connecting) {
       return Promise.resolve();
@@ -198,6 +200,7 @@ export class GoDebugProvider extends IDebugProvider {
       this.socket.once("close", rej);
     });
   }
+
   async waitDebuggerStart(port: number) {
     await this.connect(port);
 

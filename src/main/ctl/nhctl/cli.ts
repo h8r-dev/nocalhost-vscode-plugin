@@ -42,6 +42,7 @@ export type IBaseCommand<T = any> = {
   kubeConfigPath: string;
   namespace?: string;
 } & T;
+
 export interface AllInstallAppInfo {
   namespace: string;
   application: Array<InstalledAppInfo>;
@@ -282,6 +283,7 @@ export async function getPodNames(
   });
   return podNameArr;
 }
+
 export async function getControllerPod(
   props: IBaseCommand<{
     kind: string;
