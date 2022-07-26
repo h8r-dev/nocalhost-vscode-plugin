@@ -94,7 +94,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Enter dev modes automatically.
   const handleUri = async (uri: vscode.Uri) => {
-    const queryParams = new URLSearchParams(uri.query);
+    const queryParams: URLSearchParams = new URLSearchParams(uri.query);
     vscode.commands.executeCommand(
       AUTO_START_DEV_MODE,
       {

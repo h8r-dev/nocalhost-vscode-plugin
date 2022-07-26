@@ -127,37 +127,36 @@ export default class LocalCluster {
     const hash = getStringHash(yamlStr.trim());
     const resultFilePath = path.resolve(KUBE_CONFIG_DIR, hash);
 
-    if (
-      !localClusterNodes.find(
-        (it: LocalClusterNode) => it.filePath === resultFilePath
-      )
-    ) {
-      if (!fs.existsSync(KUBE_CONFIG_DIR)) {
-        fs.mkdirSync(KUBE_CONFIG_DIR);
-      }
+    const checkExisted = localClusterNodes.find(
+      (it: LocalClusterNode) => it.filePath === resultFilePath
+    );
 
-      writeFileAsync(resultFilePath, yamlStr);
-
-      const state = await checkCluster(resultFilePath);
-
-      const newCluster = new LocalClusterNode(
-        resultFilePath,
-        hash,
-        Date.now(),
-        state
-      );
-
-      localClusterNodes.push(newCluster);
-
-      host.setGlobalState(LOCAL_PATH, localClusterNodes);
-
-      await kubeconfig(resultFilePath, "add");
-
-      return newCluster;
-    } else {
-      host.log(`The cluster already exists`, true);
+    if (checkExisted) {
+      return;
     }
 
-    return null;
+    // Add new cluster
+    if (!fs.existsSync(KUBE_CONFIG_DIR)) {
+      fs.mkdirSync(KUBE_CONFIG_DIR);
+    }
+
+    writeFileAsync(resultFilePath, yamlStr);
+
+    const state = await checkCluster(resultFilePath);
+
+    const newCluster = new LocalClusterNode(
+      resultFilePath,
+      hash,
+      Date.now(),
+      state
+    );
+
+    localClusterNodes.push(newCluster);
+
+    host.setGlobalState(LOCAL_PATH, localClusterNodes);
+
+    await kubeconfig(resultFilePath, "add");
+
+    return newCluster;
   };
 }
