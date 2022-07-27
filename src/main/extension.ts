@@ -58,6 +58,8 @@ import { ShellExecError } from "./ctl/shell";
 import { createSyncManage } from "./component/syncManage";
 import { activateNocalhostDebug } from "./debug/nocalhost";
 
+import { storeAccountToken, storeApplication } from './account';
+
 // The example uses the file message format.
 nls.config({ messageFormat: nls.MessageFormat.file })();
 
@@ -95,6 +97,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // Enter dev modes automatically.
   const handleUri = async (uri: vscode.Uri) => {
     const queryParams: URLSearchParams = new URLSearchParams(uri.query);
+
     vscode.commands.executeCommand(
       AUTO_START_DEV_MODE,
       {
@@ -109,6 +112,30 @@ export async function activate(context: vscode.ExtensionContext) {
       },
       appTreeProvider
     );
+
+    const token = queryParams.get('token');
+    const email = queryParams.get('email');
+
+    // TODO: Pass more parameters from forkmain.
+    // Additional parameters required:
+    // 1. organization
+    // 2. app
+    // 3. service
+    // 4. env
+
+    // Maybe we should store data after developer entering dev mode successfully.
+    storeAccountToken({ email, token });
+    storeApplication({
+      email,
+      organization: queryParams.get('organization'),
+      application: queryParams.get('app'),
+      service: queryParams.get('service'),
+      action: queryParams.get('action'),
+      kubeconfig: queryParams.get('kubeconfig'),
+      workloadType: queryParams.get('workload_type'),
+      namespace: queryParams.get('namespace'),
+      environment: queryParams.get('env'),
+    });
   };
 
   let nocalhostFileSystemProvider = new NocalhostFileSystemProvider();
