@@ -1599,3 +1599,34 @@ export async function vpn(param: {
     enterPassword: true,
   });
 }
+
+export interface ClusterDevState {
+  isUnderDeveloping: boolean,
+  isDebugEnabled: boolean,
+  isRunEnabled: boolean,
+}
+
+export async function moniterClusterState(params: {
+  host: Host,
+  kubeconfigPath: string,
+  namespace: string,
+  appName: string,
+  workLoadName: string,
+  workloadType: string,
+  container?: string,
+}): Promise<ClusterDevState> {
+  const {
+    host, kubeconfigPath, namespace, appName,
+    workLoadName, workloadType, container,
+  } = params;
+
+  let command = NhctlCommand.create(
+    `monitor`,
+  ).getCommand();
+
+  return {
+    isUnderDeveloping: false,
+    isDebugEnabled: false,
+    isRunEnabled: false,
+  };
+}

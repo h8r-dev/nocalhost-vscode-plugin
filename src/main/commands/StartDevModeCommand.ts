@@ -465,6 +465,7 @@ export default class StartDevModeCommand implements ICommand {
       let dirs: Array<string> | string = new Array<string>();
       let isOld = false;
       dirs = host.formalizePath(currentUri);
+
       // update deployment label
       node.setContainer(containerName);
 
@@ -520,6 +521,7 @@ export default class StartDevModeCommand implements ICommand {
         node.getNameSpace(),
         null
       );
+
       host.pushDispose(
         node.getSpaceName(),
         node.getAppName(),

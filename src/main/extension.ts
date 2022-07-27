@@ -44,7 +44,7 @@ import initCommands from "./commands";
 import { ControllerNodeApi } from "./commands/StartDevModeCommand";
 import { BaseNocalhostNode, DeploymentStatus } from "./nodes/types/nodeType";
 import NocalhostWebviewPanel from "./webview/NocalhostWebviewPanel";
-import { checkVersion } from "./ctl/nhctl";
+import { checkVersion, moniterClusterState, ClusterDevState } from "./ctl/nhctl";
 import logger from "./utils/logger";
 import * as fileUtil from "./utils/fileUtil";
 import { KubernetesResourceFolder } from "./nodes/abstract/KubernetesResourceFolder";
@@ -215,6 +215,54 @@ export async function activate(context: vscode.ExtensionContext) {
 
   createSyncManage(context);
   activateNocalhostDebug(context);
+
+  moniterClusterDevState();
+}
+
+function moniterClusterDevState() {
+
+  // Fetch kubeconfig and application details from stored data.
+
+  // If no kubeconfig found, exit, no timer will be created.
+
+  // kubeconfig: string,
+  // namespace: string,
+  // workloadType: string,
+  // workload: string,
+
+  setInterval(async () => {
+    host.log(`Monitor cluster dev state`, true);
+
+    try {
+      const clusterDevState = await moniterClusterState();
+
+      const localDevState = await localWorkspaceDevState();
+
+      // TODO: Compare cluster state with local state.
+
+      // Obey state from remote cluster and if local lost connection.
+
+      // host.showErrorMessage('Local workspace lost connection to remote cluster, you can click `Reconnect` button to reconnect');
+      // Notify the developer.
+
+    } catch (err) {
+      host.log(`Monitor cluster dev state with error: ${err}`);
+    }
+  }, 5000);
+}
+
+async function localWorkspaceDevState(): Promise<ClusterDevState> {
+  // Check sync file service state
+
+  // Check if debugger connected!
+
+  // Check if remote terminal connected!
+
+  return {
+    isUnderDeveloping: false,
+    isDebugEnabled: false,
+    isRunEnabled: false,
+  };
 }
 
 function bindEvent() {
@@ -249,6 +297,7 @@ function bindEvent() {
       host.disposeApp(value.devSpaceName, value.appName);
     }
   });
+
   messageBus.on("install", (value) => {
     try {
       const data = value.value as {
