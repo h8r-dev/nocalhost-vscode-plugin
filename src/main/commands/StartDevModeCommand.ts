@@ -88,7 +88,7 @@ export default class StartDevModeCommand implements ICommand {
 
   async execCommand(node: ControllerNodeApi, info?: StartDevModeInfoType) {
     if (!node) {
-      host.showWarnMessage("Failed to get node configs, please try again.");
+      await host.showWarnMessage("Failed to get node.");
       return;
     }
 
@@ -315,8 +315,10 @@ export default class StartDevModeCommand implements ICommand {
         gitUrl
       ),
       host.showProgressing("Starting DevMode", async (progress) => {
-        progress.report({ message: "Cloning source code..."})
-        const result = await git.clone(host, gitUrl as string, [replaceSpacePath(destDir) as string]);
+        progress.report({ message: "Cloning source code..." });
+        const result = await git.clone(host, gitUrl as string, [
+          replaceSpacePath(destDir) as string,
+        ]);
         return result;
       }),
     ]);

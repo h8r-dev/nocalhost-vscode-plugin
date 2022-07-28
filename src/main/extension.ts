@@ -102,6 +102,10 @@ export async function activate(context: vscode.ExtensionContext) {
   const handleUri = async (uri: vscode.Uri) => {
     const queryParams: URLSearchParams = new URLSearchParams(uri.query);
 
+    if (!queryParams.get("kubeconfig")) {
+      return;
+    }
+
     vscode.commands.executeCommand(
       AUTO_START_DEV_MODE,
       {
@@ -124,7 +128,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // TODO: store associated dir.
     storeAccountToken({ email, token });
-    storeApplication({
+
+    const application: any = {
       email,
       organization: queryParams.get("organization"),
       application: queryParams.get("app"),
@@ -134,7 +139,11 @@ export async function activate(context: vscode.ExtensionContext) {
       workloadType: queryParams.get("workload_type"),
       namespace: queryParams.get("namespace"),
       environment: queryParams.get("env"),
-    });
+    };
+
+    storeApplication(application);
+
+    state.setData("app", application);
   };
 
   let nocalhostFileSystemProvider = new NocalhostFileSystemProvider();
