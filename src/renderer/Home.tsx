@@ -15,16 +15,18 @@ export default function Home() {
     });
   }, []);
 
-  return (
-    <div>
-      {userProfile ? (
-        <div>
-          <AccountComp profile={userProfile} />
-          <ApplicationComp app={{ name: "abc123" }} />
-        </div>
-      ) : (
-        <LoginComp />
-      )}
-    </div>
-  );
+  return <div></div>;
+
+  // return (
+  //   <div>
+  //     {userProfile ? (
+  //       <div>
+  //         <AccountComp profile={userProfile} />
+  //         <ApplicationComp app={{ name: "abc123" }} />
+  //       </div>
+  //     ) : (
+  //       <LoginComp />
+  //     )}
+  //   </div>
+  // );
 }
