@@ -87,11 +87,16 @@ export default class AutoStartDevModeCommand implements ICommand {
           await this.addNewCluster(newLocalCluster);
         }
 
-        host.showInformationMessage(
+        await host.showInformationMessage(
           "View initializing progress on forkmain website"
         );
 
         // Open page to display current progress.
+        const timestamp = Date.now();
+
+        // 1. Set timestamp as progress-id, save to forkmain backend.
+        // 2. Redirect to progress page with progress-id as query string.
+
         setTimeout(() => {
           const baseUrl = process.env.FORKMAIN_URL;
           host.openExternal(baseUrl + "/docs/overview/intro");
@@ -102,6 +107,12 @@ export default class AutoStartDevModeCommand implements ICommand {
         );
         const targetWorkloadNode: BaseNocalhostNode =
           await this.locateWorkerloadNode(rootNode, searchPath);
+
+        if (!targetWorkloadNode) {
+          host.log("Failed to find workload node, exit.", true);
+          await host.showErrorMessage("Failed to find workload node, exit.");
+          return;
+        }
 
         // Enter different dev modes based on action provided.
         this.handleActions(action, targetWorkloadNode);

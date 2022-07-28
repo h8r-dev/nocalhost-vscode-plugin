@@ -82,6 +82,8 @@ export async function storeApplication(data: ApplicationDetail): Promise<void> {
       cacheData = JSON.parse(cacheData);
     }
 
+    // TODO: Store local associated dir.
+
     const appData = {
       [data.organization]: {
         name: data.organization,

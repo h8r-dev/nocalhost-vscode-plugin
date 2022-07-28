@@ -44,7 +44,11 @@ import initCommands from "./commands";
 import { ControllerNodeApi } from "./commands/StartDevModeCommand";
 import { BaseNocalhostNode, DeploymentStatus } from "./nodes/types/nodeType";
 import NocalhostWebviewPanel from "./webview/NocalhostWebviewPanel";
-import { checkVersion, moniterClusterState, ClusterDevState } from "./ctl/nhctl";
+import {
+  checkVersion,
+  moniterClusterState,
+  ClusterDevState,
+} from "./ctl/nhctl";
 import logger from "./utils/logger";
 import * as fileUtil from "./utils/fileUtil";
 import { KubernetesResourceFolder } from "./nodes/abstract/KubernetesResourceFolder";
@@ -58,13 +62,13 @@ import { ShellExecError } from "./ctl/shell";
 import { createSyncManage } from "./component/syncManage";
 import { activateNocalhostDebug } from "./debug/nocalhost";
 
-import { storeAccountToken, storeApplication } from './account';
+import { storeAccountToken, storeApplication } from "./account";
 
 // The example uses the file message format.
 nls.config({ messageFormat: nls.MessageFormat.file })();
 
 const envVariables: any = {
-  FORKMAIN_URL: "http://localhost:3000",
+  FORKMAIN_URL: "http://localhost",
 };
 
 if (process.env.NODE_ENV === "production") {
@@ -113,28 +117,23 @@ export async function activate(context: vscode.ExtensionContext) {
       appTreeProvider
     );
 
-    const token = queryParams.get('token');
-    const email = queryParams.get('email');
-
-    // TODO: Pass more parameters from forkmain.
-    // Additional parameters required:
-    // 1. organization
-    // 2. app
-    // 3. service
-    // 4. env
+    const token = queryParams.get("token");
+    const email = queryParams.get("email");
 
     // Maybe we should store data after developer entering dev mode successfully.
+
+    // TODO: store associated dir.
     storeAccountToken({ email, token });
     storeApplication({
       email,
-      organization: queryParams.get('organization'),
-      application: queryParams.get('app'),
-      service: queryParams.get('service'),
-      action: queryParams.get('action'),
-      kubeconfig: queryParams.get('kubeconfig'),
-      workloadType: queryParams.get('workload_type'),
-      namespace: queryParams.get('namespace'),
-      environment: queryParams.get('env'),
+      organization: queryParams.get("organization"),
+      application: queryParams.get("app"),
+      service: queryParams.get("service"),
+      action: queryParams.get("action"),
+      kubeconfig: queryParams.get("kubeconfig"),
+      workloadType: queryParams.get("workload_type"),
+      namespace: queryParams.get("namespace"),
+      environment: queryParams.get("env"),
     });
   };
 
@@ -220,7 +219,6 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 function syncDevState() {
-
   // Fetch kubeconfig and application details from stored data.
 
   // If no kubeconfig found, exit, no timer will be created.
@@ -255,7 +253,6 @@ function syncDevState() {
 
       // host.showErrorMessage('Local workspace lost connection to remote cluster, you can click `Reconnect` button to reconnect');
       // Notify the developer.
-
     } catch (err) {
       host.log(`Monitor cluster dev state with error: ${err}`);
     }
