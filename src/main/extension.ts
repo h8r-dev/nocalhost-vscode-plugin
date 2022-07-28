@@ -216,10 +216,10 @@ export async function activate(context: vscode.ExtensionContext) {
   createSyncManage(context);
   activateNocalhostDebug(context);
 
-  moniterClusterDevState();
+  syncDevState();
 }
 
-function moniterClusterDevState() {
+function syncDevState() {
 
   // Fetch kubeconfig and application details from stored data.
 
@@ -231,10 +231,21 @@ function moniterClusterDevState() {
   // workload: string,
 
   setInterval(async () => {
-    host.log(`Monitor cluster dev state`, true);
+    host.log(`Sync dev state between cluster and local workspace`, true);
+
+    // Monitor dev state of local workspace.
+
+    // If local workspace is under development, has that flag enabled.
+    // Then check remote cluster.
+    // If remote cluster is off dev state.
+    // Then clear local state.
+
+    // If remote cluster is dev state, and local workspace is off
+    // That means the local state modified manually
+    // You have to enter dev mode locally youself, click `reconnect` button.
 
     try {
-      const clusterDevState = await moniterClusterState();
+      // const clusterDevState = await moniterClusterState();
 
       const localDevState = await localWorkspaceDevState();
 
