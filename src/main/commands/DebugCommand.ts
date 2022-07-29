@@ -51,6 +51,7 @@ export default class DebugCommand implements ICommand {
         | undefined
       )
     ];
+
     if (!node) {
       host.showWarnMessage("Failed to get node configs, please try again.");
       return;

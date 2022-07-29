@@ -265,7 +265,7 @@ function syncDevState() {
     } catch (err) {
       host.log(`Monitor cluster dev state with error: ${err}`);
     }
-  }, 5000);
+  }, 10000);
 }
 
 async function localWorkspaceDevState(): Promise<ClusterDevState> {
