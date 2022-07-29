@@ -38,6 +38,7 @@ export default class DebugCommand implements ICommand {
   constructor(context: vscode.ExtensionContext) {
     registerCommand(context, this.command, false, this.execCommand.bind(this));
   }
+
   async execCommand(...rest: any[]) {
     const [node, param] = rest as [
       ControllerResourceNode,
@@ -197,6 +198,7 @@ export default class DebugCommand implements ICommand {
       );
     }
   }
+
   getLanguage() {
     const {
       image,

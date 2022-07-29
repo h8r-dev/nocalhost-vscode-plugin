@@ -1,80 +1,160 @@
+/**
+ * Execute git commands.
+ */
+
 import { spawn } from "child_process";
 import { Host } from "../host";
-import axios from "axios";
 import logger from "../utils/logger";
 
 class Git {
-  public async clone(host: Host, gitUrl: string, args: Array<string>) {
-    if (gitUrl.indexOf("http") === 0) {
-      const checkUrl = `${gitUrl}/info/refs?service=git-upload-pack`;
-      const httpClient = axios.create();
-      const defaultHeaders = axios.defaults.headers;
-      defaultHeaders["User-Agent"] = "git/nocalhost-plugin";
-      await httpClient
-        .get(checkUrl, { headers: defaultHeaders })
-        .catch(async (data) => {
-          if (data && data.response && data.response.status === 401) {
-            const username = await host.showInputBox({
-              placeHolder: "username",
-              prompt: "please input your username of git",
-            });
-            if (!username) {
-              return;
-            }
-            const password = await host.showInputBox({
-              placeHolder: "password",
-              prompt: "please input your password of git",
-              password: true,
-            });
-            if (!password) {
-              return;
-            }
+  host: Host = null;
+  user: string;
+  project: string;
+  args: string[];
 
-            const scheme = gitUrl.split("://");
-            gitUrl = `${scheme[0]}://${username}:${password}@${scheme[1]}`;
-          } else {
-            throw data;
-          }
-        });
-    } else {
-      args.push("--config");
-      args.push(
-        'core.sshCommand="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"'
-      );
+  private parseGitUrl(gitUrl: string): string[] {
+    if (gitUrl.startsWith("https")) {
+      // https protocol
+      const [scheme, host] = gitUrl.split("://");
+      const [_, user, project] = host.split("/");
+      return [user, project];
     }
-    await this.execComandsByArgs(host, ["clone", gitUrl, ...args]);
+
+    if (gitUrl.startsWith("git@")) {
+      // Git protocol
+      const [scheme, host] = gitUrl.split(":");
+      const [user, project] = host.split("/");
+      return [user, project.replace(/\.git$/, "")];
+    }
   }
 
-  public async execComandsByArgs(host: Host, args: Array<string>) {
+  private async cloneWithHttpsProtocol(username?: string, token?: string) {
+    this.host.log("Trying Https Protocol...");
+
+    let gitURL = `https://github.com/${this.user}/${this.project}.git`;
+    if (username && token) {
+      gitURL = `https://${username}:${token}@github.com/${this.user}/${this.project}.git`;
+    }
+
+    const result = await this.execComandsByArgs(["clone", gitURL]).catch(
+      (err) => err
+    );
+    if (result === null) {
+      this.host.log(`Operation: git clone ${gitURL} successfully!`);
+      return true;
+    }
+
+    return false;
+  }
+
+  private async cloneWithGitProtocol() {
+    this.host.log("Trying Git Protocol...");
+
+    const gitURL = `git@github.com:${this.user}/${this.project}.git`;
+
+    const result = await this.execComandsByArgs(["clone", gitURL]).catch(
+      (err) => err
+    );
+    if (result === null) {
+      this.host.log(`Operation: git clone ${gitURL} successfully!`);
+      return true;
+    }
+
+    return false;
+  }
+
+  public async clone(
+    host: Host,
+    gitUrl: string,
+    args: Array<string>
+  ): Promise<boolean> {
+    this.host = host;
+    this.args = args;
+
+    const [user, project] = this.parseGitUrl(gitUrl);
+    this.user = user;
+    this.project = project;
+
+    let cloneResult: boolean = false;
+
+    // Try https protocol
+    cloneResult = await this.cloneWithHttpsProtocol();
+    if (cloneResult) {
+      return true;
+    }
+
+    // Try Git protocol
+    cloneResult = await this.cloneWithGitProtocol();
+    if (cloneResult) {
+      return true;
+    }
+
+    host.showInformationMessage("You have to enter your credentials to clone the source code.");
+
+    // Prompt window to input username && password, and use https protocol
+    const username = await host.showInputBox({
+      placeHolder: "Username",
+      prompt: "Please input your username of GitHub",
+    });
+
+    if (!username) {
+      this.host.showInformationMessage(`Cancelled`);
+      return;
+    }
+
+    const token = await host.showInputBox({
+      placeHolder: "GitHub Personal Access Token",
+      prompt: "Please input your GitHub personal access token",
+      password: true,
+    });
+
+    if (!token) {
+      this.host.showInformationMessage(`Cancelled`);
+      return;
+    }
+
+    cloneResult = await this.cloneWithHttpsProtocol(username, token);
+    return cloneResult;
+  }
+
+  public async execComandsByArgs(args: Array<string>) {
     let argsStr = "git";
-    args.forEach((arg) => {
+    const mergedArgs = [...args, ...this.args];
+    mergedArgs.forEach((arg) => {
       argsStr += ` ${arg}`;
     });
-    await this.exec(host, argsStr);
+    return this.exec(argsStr);
   }
 
-  // TODO: HTTP SSH
-  public async exec(host: Host, command: string) {
-    host.log(`[cmd] ${command}`, true);
+  public async exec(command: string) {
+    this.host.log(`[cmd] ${command}`, true);
     logger.info(`[cmd] ${command}`);
+
     return new Promise((resolve, reject) => {
-      const proc = spawn(`${command}`, [], { shell: true });
+      const proc = spawn(command, [], { shell: true });
       let errorStr = "";
+
       proc.on("close", (code) => {
         if (code === 0) {
           resolve(null);
         } else {
+          this.host.showErrorMessage(`Error: ${errorStr}`);
           reject(errorStr);
         }
       });
 
-      proc.stdout.on("data", function (data) {
-        host.log("" + data, true);
+      proc.stdout.on("data", (data) => {
+        this.host.log("" + data, true);
       });
 
-      proc.stderr.on("data", function (data) {
+      proc.on("error", (err) => {
+        this.host.showErrorMessage(`Error: ${err.message}`);
+        reject(err);
+      });
+
+      proc.stderr.on("data", (data) => {
         errorStr = data + "";
-        host.log("" + data, true);
+        this.host.log("" + data, true);
         logger.error(`[cmd] ${command} error: ${data}`);
       });
     });

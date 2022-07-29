@@ -3,7 +3,8 @@ import { NocalhostRootNode } from "./nodes/NocalhostRootNode";
 import { BaseNocalhostNode } from "./nodes/types/nodeType";
 
 export default class NocalhostAppProvider
-  implements vscode.TreeDataProvider<BaseNocalhostNode> {
+  implements vscode.TreeDataProvider<BaseNocalhostNode>
+{
   private onDidChangeTreeDataEventEmitter = new vscode.EventEmitter<
     BaseNocalhostNode | undefined
   >();
@@ -12,6 +13,7 @@ export default class NocalhostAppProvider
       vscode.window.onDidChangeActiveColorTheme(() => this.refresh())
     );
   }
+
   onDidChangeTreeData = this.onDidChangeTreeDataEventEmitter.event;
   async getTreeItem(element: BaseNocalhostNode): Promise<vscode.TreeItem> {
     let item: vscode.TreeItem | Thenable<vscode.TreeItem>;

@@ -54,7 +54,7 @@ class State {
     }
   }
 
-  public getData(id: string) {
+  public getData(id: string): any {
     return this.dataMap.get(id);
   }
 

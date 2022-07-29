@@ -42,6 +42,7 @@ export type IBaseCommand<T = any> = {
   kubeConfigPath: string;
   namespace?: string;
 } & T;
+
 export interface AllInstallAppInfo {
   namespace: string;
   application: Array<InstalledAppInfo>;
@@ -62,6 +63,7 @@ export class NhctlCommand {
   ) {
     this.baseCommand = `${NH_BIN_NHCTL} ${base || ""}`;
   }
+
   static create(
     base: string,
     baseParams?: IBaseCommand<unknown>,
@@ -70,6 +72,7 @@ export class NhctlCommand {
   ) {
     return new NhctlCommand(base, baseParams, execParam, args);
   }
+
   static get(
     baseParams?: IBaseCommand<unknown>,
     ms = GLOBAL_TIMEOUT,
@@ -80,6 +83,7 @@ export class NhctlCommand {
 
     return command;
   }
+
   static dev(
     baseParams?: IBaseCommand<unknown>,
     execParam: Omit<ExecParam, "command"> = {},
@@ -90,6 +94,7 @@ export class NhctlCommand {
 
     return command;
   }
+
   static kExec(baseParams?: IBaseCommand<{ args?: string[] }>) {
     const command = NhctlCommand.create("k exec", baseParams);
     command.args = baseParams.args ?? [];
@@ -282,6 +287,7 @@ export async function getPodNames(
   });
   return podNameArr;
 }
+
 export async function getControllerPod(
   props: IBaseCommand<{
     kind: string;
@@ -1592,4 +1598,35 @@ export async function vpn(param: {
     args: ["--workloads", `${workLoadType.toLowerCase()}/${workLoadName}`],
     enterPassword: true,
   });
+}
+
+export interface ClusterDevState {
+  isUnderDeveloping: boolean,
+  isDebugEnabled: boolean,
+  isRunEnabled: boolean,
+}
+
+export async function moniterClusterState(params: {
+  host: Host,
+  kubeconfigPath: string,
+  namespace: string,
+  appName: string,
+  workLoadName: string,
+  workloadType: string,
+  container?: string,
+}): Promise<ClusterDevState> {
+  const {
+    host, kubeconfigPath, namespace, appName,
+    workLoadName, workloadType, container,
+  } = params;
+
+  let command = NhctlCommand.create(
+    `monitor`,
+  ).getCommand();
+
+  return {
+    isUnderDeveloping: false,
+    isDebugEnabled: false,
+    isRunEnabled: false,
+  };
 }

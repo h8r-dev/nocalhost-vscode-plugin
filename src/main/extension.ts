@@ -1,8 +1,10 @@
 import * as vscode from "vscode";
+import * as nls from "vscode-nls";
 
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import NocalhostAppProvider from "./appProvider";
+
 import {
   PLUGIN_TEMP_DIR,
   TMP_DEV_START_IMAGE,
@@ -30,7 +32,10 @@ import {
   NH_BIN,
   TMP_DEV_START_COMMAND,
   TMP_COMMAND,
+  PLUGIN_CONFIG_PROJECTS_DIR,
+  PLUGIN_CONFIG_ACCOUNT_DIR,
 } from "./constants";
+
 import host from "./host";
 import NocalhostFileSystemProvider from "./fileSystemProvider";
 import state from "./state";
@@ -39,24 +44,40 @@ import initCommands from "./commands";
 import { ControllerNodeApi } from "./commands/StartDevModeCommand";
 import { BaseNocalhostNode, DeploymentStatus } from "./nodes/types/nodeType";
 import NocalhostWebviewPanel from "./webview/NocalhostWebviewPanel";
-import { checkVersion } from "./ctl/nhctl";
+import {
+  checkVersion,
+  moniterClusterState,
+  ClusterDevState,
+} from "./ctl/nhctl";
 import logger from "./utils/logger";
 import * as fileUtil from "./utils/fileUtil";
 import { KubernetesResourceFolder } from "./nodes/abstract/KubernetesResourceFolder";
-// import { registerYamlSchemaSupport } from "./yaml/yamlSchema";
 import messageBus, { EventType } from "./utils/messageBus";
 import LocalClusterService from "./clusters/LocalCuster";
 import { DevSpaceNode } from "./nodes/DevSpaceNode";
 import { HomeWebViewProvider } from "./webview/HomePage";
 import { unlock } from "./utils/download";
-// import DataCenter from "./common/DataCenter/index";
-import * as nls from "vscode-nls";
 import SyncServiceCommand from "./commands/sync/SyncServiceCommand";
 import { ShellExecError } from "./ctl/shell";
 import { createSyncManage } from "./component/syncManage";
 import { activateNocalhostDebug } from "./debug/nocalhost";
+
+import { storeAccountToken, storeApplication } from "./account";
+
 // The example uses the file message format.
 nls.config({ messageFormat: nls.MessageFormat.file })();
+
+const envVariables: any = {
+  FORKMAIN_URL: "http://localhost",
+};
+
+if (process.env.NODE_ENV === "production") {
+  envVariables.FORKMAIN_URL = "https://forkmain.com";
+}
+
+Object.keys(envVariables).forEach(
+  (key: string) => (process.env[key] = envVariables[key])
+);
 
 export let appTreeView: vscode.TreeView<BaseNocalhostNode> | null | undefined;
 
@@ -79,7 +100,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Enter dev modes automatically.
   const handleUri = async (uri: vscode.Uri) => {
-    const queryParams = new URLSearchParams(uri.query);
+    const queryParams: URLSearchParams = new URLSearchParams(uri.query);
+
+    if (!queryParams.get("kubeconfig")) {
+      return;
+    }
+
     vscode.commands.executeCommand(
       AUTO_START_DEV_MODE,
       {
@@ -94,6 +120,30 @@ export async function activate(context: vscode.ExtensionContext) {
       },
       appTreeProvider
     );
+
+    const token = queryParams.get("token");
+    const email = queryParams.get("email");
+
+    // Maybe we should store data after developer entering dev mode successfully.
+
+    // TODO: store associated dir.
+    storeAccountToken({ email, token });
+
+    const application: any = {
+      email,
+      organization: queryParams.get("organization"),
+      application: queryParams.get("app"),
+      service: queryParams.get("service"),
+      action: queryParams.get("action"),
+      kubeconfig: queryParams.get("kubeconfig"),
+      workloadType: queryParams.get("workload_type"),
+      namespace: queryParams.get("namespace"),
+      environment: queryParams.get("env"),
+    };
+
+    storeApplication(application);
+
+    state.setData("app", application);
   };
 
   let nocalhostFileSystemProvider = new NocalhostFileSystemProvider();
@@ -126,7 +176,7 @@ export async function activate(context: vscode.ExtensionContext) {
   if (!host.getGlobalState(WELCOME_DID_SHOW)) {
     NocalhostWebviewPanel.open({
       url: "/welcome",
-      title: "Welcome to Nocalhost",
+      title: "Welcome to ForkMain",
     });
     host.setGlobalState(WELCOME_DID_SHOW, true);
   }
@@ -173,6 +223,63 @@ export async function activate(context: vscode.ExtensionContext) {
 
   createSyncManage(context);
   activateNocalhostDebug(context);
+
+  syncDevState();
+}
+
+function syncDevState() {
+  // Fetch kubeconfig and application details from stored data.
+
+  // If no kubeconfig found, exit, no timer will be created.
+
+  // kubeconfig: string,
+  // namespace: string,
+  // workloadType: string,
+  // workload: string,
+
+  setInterval(async () => {
+    host.log(`Sync dev state between cluster and local workspace`, true);
+
+    // Monitor dev state of local workspace.
+
+    // If local workspace is under development, has that flag enabled.
+    // Then check remote cluster.
+    // If remote cluster is off dev state.
+    // Then clear local state.
+
+    // If remote cluster is dev state, and local workspace is off
+    // That means the local state modified manually
+    // You have to enter dev mode locally youself, click `reconnect` button.
+
+    try {
+      // const clusterDevState = await moniterClusterState();
+
+      const localDevState = await localWorkspaceDevState();
+
+      // TODO: Compare cluster state with local state.
+
+      // Obey state from remote cluster and if local lost connection.
+
+      // host.showErrorMessage('Local workspace lost connection to remote cluster, you can click `Reconnect` button to reconnect');
+      // Notify the developer.
+    } catch (err) {
+      host.log(`Monitor cluster dev state with error: ${err}`);
+    }
+  }, 5000);
+}
+
+async function localWorkspaceDevState(): Promise<ClusterDevState> {
+  // Check sync file service state
+
+  // Check if debugger connected!
+
+  // Check if remote terminal connected!
+
+  return {
+    isUnderDeveloping: false,
+    isDebugEnabled: false,
+    isRunEnabled: false,
+  };
 }
 
 function bindEvent() {
@@ -207,6 +314,7 @@ function bindEvent() {
       host.disposeApp(value.devSpaceName, value.appName);
     }
   });
+
   messageBus.on("install", (value) => {
     try {
       const data = value.value as {
@@ -374,6 +482,8 @@ export async function updateServerConfigStatus() {
 
 async function init(context: vscode.ExtensionContext) {
   await host.setContext(context);
+  fileUtil.mkdir(PLUGIN_CONFIG_PROJECTS_DIR);
+
   fileUtil.mkdir(NH_CONFIG_DIR);
   fileUtil.mkdir(PLUGIN_CONFIG_DIR);
   fileUtil.mkdir(PLUGIN_TEMP_DIR);
@@ -381,11 +491,17 @@ async function init(context: vscode.ExtensionContext) {
   fileUtil.mkdir(HELM_VALUES_DIR);
   fileUtil.mkdir(HELM_NH_CONFIG_DIR);
   fileUtil.mkdir(NH_BIN);
+
+  // Create accounts dir.
+  fileUtil.mkdir(PLUGIN_CONFIG_ACCOUNT_DIR);
+
   // fileStore.initConfig();
   host.setGlobalState("extensionPath", context.extensionPath);
   updateServerConfigStatus();
+
   await messageBus.init();
   await checkVersion();
+
   LocalClusterService.verifyLocalCluster();
 }
 

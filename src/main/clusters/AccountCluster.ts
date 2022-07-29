@@ -33,6 +33,7 @@ export class AccountClusterNode {
   refreshToken: string | null;
   state: ClustersState;
 }
+
 export default class AccountClusterService {
   instance: AxiosInstance;
   accountClusterNode: AccountClusterNode;
@@ -40,6 +41,7 @@ export default class AccountClusterService {
   refreshToken: string;
   lastServiceAccounts: IServiceAccountInfo[];
   isRefreshing: boolean;
+
   constructor(public loginInfo: LoginInfo) {
     var parsed = url.parse(loginInfo.baseUrl);
 
@@ -48,10 +50,12 @@ export default class AccountClusterService {
     }
 
     this.isRefreshing = true;
+
     this.instance = axios.create({
       baseURL: loginInfo.baseUrl,
       timeout: 1000 * 20,
     });
+
     this.instance.interceptors.request.use((config) => {
       // const jwt = host.getGlobalState(JWT) as string;
       if (!config.baseURL) {
@@ -63,6 +67,7 @@ export default class AccountClusterService {
 
       return config;
     });
+
     this.instance.interceptors.response.use(
       async (response: AxiosResponse<IResponseData>) => {
         const config = response.config;
@@ -135,7 +140,8 @@ export default class AccountClusterService {
       throw Error("No clusters");
     }
 
-    const applications: IV2ApplicationInfo[] = await accountClusterService.getV2Application();
+    const applications: IV2ApplicationInfo[] =
+      await accountClusterService.getV2Application();
     logger.info(
       `[getServerClusterRootNodes] applications length ${
         (applications || []).length
@@ -269,6 +275,7 @@ export default class AccountClusterService {
 
     return { id, kubeConfigPath };
   }
+
   static appendClusterByLoginInfo = async (
     loginInfo: LoginInfo
   ): Promise<AccountClusterNode> => {
@@ -315,9 +322,11 @@ export default class AccountClusterService {
       },
     };
   };
+
   resetDevSpace = async (devSpaceId: number) => {
     return this.instance.post(`/v1/plugin/${devSpaceId}/recreate`);
   };
+
   login = async (loginInfo: LoginInfo) => {
     logger.info("logging in。..");
     const response = (
@@ -434,6 +443,7 @@ export default class AccountClusterService {
       return [];
     }
   }
+
   async getVersion() {
     try {
       const response = await this.instance.get("/v1/version");

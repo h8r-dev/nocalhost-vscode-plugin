@@ -38,6 +38,11 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
     this._isRegister = true;
   }
 
+  private open_forkmain_website(path: string): void {
+    const baseUrl = process.env.FORKMAIN_URL;
+    host.openExternal(baseUrl + path);
+  }
+
   private _webviewView: vscode.WebviewView;
   resolveWebviewView(
     webviewView: vscode.WebviewView,
@@ -53,6 +58,7 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
       enableCommandUris: true,
       localResourceRoots: [this._extensionUri],
     };
+
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
     webviewView.webview.onDidReceiveMessage(
@@ -60,6 +66,23 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
         const { type } = data;
 
         switch (type) {
+          case "loginForkMain": {
+            const payload = data.data ?? {};
+            // this.open_forkmain_website(payload.url)
+
+            webviewView.webview.postMessage({
+              userProfile: {
+                name: "chenyuan123",
+              },
+            });
+
+            break;
+          }
+          case "manageApp": {
+            const payload = data.data ?? {};
+            this.open_forkmain_website(payload.url);
+            break;
+          }
           case "connectServer": {
             vscode.commands.executeCommand(SIGN_IN, data.data);
             break;
@@ -217,6 +240,7 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
       resolveExtensionFilePath("dist", "static", "home", name)
     );
   }
+
   private _getHtmlForWebview(webview: vscode.Webview) {
     // Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
     const bundlePath = webview.asWebviewUri(
@@ -240,7 +264,6 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
 			<link href="${styleResetUri}" rel="stylesheet">
 			<link href="${styleVSCodeUri}" rel="stylesheet">
 			<link href="${styleMainUri}" rel="stylesheet">
-			
 			<title>Home</title>
 		</head>
 		<body>

@@ -6,7 +6,6 @@ import * as vscode from "vscode";
 import * as yaml from "yaml";
 
 import host from "../host";
-import { appTreeView } from "../extension";
 import NocalhostAppProvider from "../appProvider";
 import { LocalCluster } from "../clusters";
 import { LocalClusterNode } from "../clusters/LocalCuster";
@@ -15,7 +14,7 @@ import { NOCALHOST } from "../constants";
 import { NocalhostRootNode } from "../nodes/NocalhostRootNode";
 import { BaseNocalhostNode } from "../nodes/types/nodeType";
 import { DevSpaceNode } from "../nodes/DevSpaceNode";
-import { RUN, DEBUG } from "../commands/constants";
+import { RUN, DEBUG, END_DEV_MODE } from "../commands/constants";
 import { IKubeconfig } from "../ctl/nhctl";
 import logger from "../utils/logger";
 
@@ -39,7 +38,7 @@ type DataType = {
     | "CronJob"
     | "Pod";
   workload: string;
-  action: "run" | "debug";
+  action: "run" | "debug" | "stop";
 };
 
 export default class AutoStartDevModeCommand implements ICommand {
@@ -55,52 +54,81 @@ export default class AutoStartDevModeCommand implements ICommand {
     const { connectionInfo, application, workloadType, workload, action } =
       data;
 
-    host.showProgressing("Adding cluster...", async () => {
-      let { kubeconfig, clusterName } = await this.getKubeconfig(
-        connectionInfo
-      );
+    let { kubeconfig, clusterName } = await this.getKubeconfig(connectionInfo);
 
-      let newLocalCluster = await LocalCluster.appendLocalClusterByKubeConfig(
-        kubeconfig
-      );
+    // Locate workload node in tree view.
+    const searchPath = [
+      clusterName,
+      connectionInfo.namespace,
+      application,
+      "Workloads",
+      workloadType + "s",
+      workload,
+    ];
 
-      if (newLocalCluster) {
-        await this.addNewCluster(newLocalCluster);
-      }
+    if (action === "stop") {
+      host.showProgressing("Stopping local workspace...", async () => {
+        const rootNode = Promise.resolve(
+          appTreeProvider as Pick<BaseNocalhostNode, "getChildren">
+        );
+        const targetWorkloadNode: BaseNocalhostNode =
+          await this.locateWorkerloadNode(rootNode, searchPath);
 
-      // Locate workload node in tree view.
-      const searchPath = [
-        clusterName,
-        connectionInfo.namespace,
-        application,
-        "Workloads",
-        workloadType + "s",
-        workload,
-      ];
-      const targetWorkloadNode: BaseNocalhostNode = await host.withProgress(
-        {
-          title: `Entering ${action} mode...`,
-          cancellable: true,
-        },
-        async (_, token) => {
-          const rootNode = Promise.resolve(
-            appTreeProvider as Pick<BaseNocalhostNode, "getChildren">
-          );
-          return this.locateWorkerloadNode(token, rootNode, searchPath);
+        // Stop local workspace.
+        this.handleActions(action, targetWorkloadNode);
+      });
+    } else {
+      host.showProgressing("Initializing local workspace...", async () => {
+        let newLocalCluster = await LocalCluster.appendLocalClusterByKubeConfig(
+          kubeconfig
+        );
+
+        if (newLocalCluster) {
+          await this.addNewCluster(newLocalCluster);
         }
-      );
 
-      // Reveal node in tree view.
-      const nodeStateId = state.getNode(targetWorkloadNode.getNodeStateId());
-      await appTreeView.reveal(nodeStateId);
+        await host.showInformationMessage(
+          "View initializing progress on forkmain website"
+        );
 
-      // Enter different dev modes.
-      this.enterDevModes(action, targetWorkloadNode);
-    });
+        // Open page to display current progress.
+        const timestamp = Date.now();
+
+        // TODO: Store progress-id into store, and then match when it reopen vscode back.
+
+        // 1. Set timestamp as progress-id, save to forkmain backend.
+        // 2. Redirect to progress page with progress-id as query string.
+
+        const application: any = state.getData("app");
+
+        setTimeout(() => {
+          const baseUrl = process.env.FORKMAIN_URL;
+          host.openExternal(
+            baseUrl +
+              `/${application.organization}/applications/progress?progress_id=${timestamp}`
+          );
+        }, 1000);
+
+        const rootNode = Promise.resolve(
+          appTreeProvider as Pick<BaseNocalhostNode, "getChildren">
+        );
+        const targetWorkloadNode: BaseNocalhostNode =
+          await this.locateWorkerloadNode(rootNode, searchPath);
+
+        if (!targetWorkloadNode) {
+          host.log("Failed to find workload node, exit.", true);
+          await host.showErrorMessage("Failed to find workload node, exit.");
+          return;
+        }
+
+        // Enter different dev modes based on action provided.
+        this.handleActions(action, targetWorkloadNode);
+      });
+    }
   }
 
-  private enterDevModes(
-    action: "debug" | "run",
+  private handleActions(
+    action: "debug" | "run" | "stop",
     targetWorkloadNode: BaseNocalhostNode
   ): void {
     switch (action) {
@@ -114,6 +142,12 @@ export default class AutoStartDevModeCommand implements ICommand {
         vscode.commands.executeCommand(DEBUG, targetWorkloadNode, {
           isAutoMode: true,
         }); // Enter debug mode.
+        break;
+
+      case "stop":
+        vscode.commands.executeCommand(END_DEV_MODE, targetWorkloadNode, {
+          isAutoMode: true,
+        }); // End dev mode.
         break;
 
       default:
@@ -135,16 +169,8 @@ export default class AutoStartDevModeCommand implements ICommand {
     vscode.window.showInformationMessage("Success add cluster");
   }
 
-  private async locateWorkerloadNode(
-    token: vscode.CancellationToken,
-    rootNode: any,
-    searchPath: string[]
-  ) {
+  private async locateWorkerloadNode(rootNode: any, searchPath: string[]) {
     return searchPath.reduce(async (parent, label) => {
-      if (token.isCancellationRequested) {
-        return null;
-      }
-
       const children = await (await parent).getChildren();
 
       const child = children.find((item: any) => {

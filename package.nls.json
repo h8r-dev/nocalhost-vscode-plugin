@@ -1,5 +1,5 @@
 {
-  "noReady.description": "Welcome to nocalhost, please wait...",
+  "noReady.description": "Welcome to ForkMain, please wait...",
   "noServer.description": "Please config your server URL.\n[Config Server URL](command:Nocalhost.switchEndPoint)\n[Click here](https://nocalhost.dev/) for more details.",
   "noLogin.description": "Click sign in button to list DevSpaces.\n[Sign In](command:Nocalhost.signin)\n[Click here](https://nocalhost.dev/) for more details.",
   "noApps.description": "You have no cluster currently, You can click \"+\" icon for :\n- Add kubeconfig to develop existing workloads.\n- Connect to Nocalhost Server\n\nor view [Quick Start](https://nocalhost.dev/docs/quick-start/) if you use for Nocalhost first time.",
