@@ -39,6 +39,7 @@ import logger from "../utils/logger";
 import { getContainer } from "../utils/getContainer";
 import SyncServiceCommand from "./sync/SyncServiceCommand";
 import { getContainers } from "../ctl/nhctl";
+import NocalhostWebviewPanel from "../webview/NocalhostWebviewPanel";
 
 export interface ControllerNodeApi {
   name: string;
@@ -73,12 +74,23 @@ const ValidWorkloadTypes: string[] = [
   "Pods",
 ];
 
+enum progressMessage {
+  CLONE_CODE = "cloneCode",
+  BOOTSTRAP_SERVICE = "bootstrapService",
+  SYNC_CODE = "syncCode",
+  INSTALL_DEPENDENCIES = "installDependencies",
+  CONNECT_DEBUGGER = "connectDebugger",
+  READY = "ready",
+}
+
 export default class StartDevModeCommand implements ICommand {
   command: string = START_DEV_MODE;
   context: vscode.ExtensionContext;
+  progressPanel: NocalhostWebviewPanel | undefined;
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
+    this.progressPanel = NocalhostWebviewPanel.getPanelByURL("/progress");
     registerCommand(context, this.command, true, this.execCommand.bind(this));
   }
 
@@ -449,6 +461,14 @@ export default class StartDevModeCommand implements ICommand {
         SyncServiceCommand.checkSync();
       }
     }
+
+    NocalhostWebviewPanel.postMessage(
+      {
+        type: "sync/initState",
+        payload: { step: progressMessage.CLONE_CODE },
+      },
+      1
+    );
 
     return destDir;
   }

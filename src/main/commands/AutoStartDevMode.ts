@@ -17,6 +17,7 @@ import { DevSpaceNode } from "../nodes/DevSpaceNode";
 import { RUN, DEBUG, END_DEV_MODE } from "../commands/constants";
 import { IKubeconfig } from "../ctl/nhctl";
 import logger from "../utils/logger";
+import NocalhostWebviewPanel from "../webview/NocalhostWebviewPanel";
 
 import ICommand from "./ICommand";
 import { AUTO_START_DEV_MODE } from "./constants";
@@ -87,27 +88,10 @@ export default class AutoStartDevModeCommand implements ICommand {
           await this.addNewCluster(newLocalCluster);
         }
 
-        await host.showInformationMessage(
-          "View initializing progress on forkmain website"
-        );
-
-        // Open page to display current progress.
-        const timestamp = Date.now();
-
-        // TODO: Store progress-id into store, and then match when it reopen vscode back.
-
-        // 1. Set timestamp as progress-id, save to forkmain backend.
-        // 2. Redirect to progress page with progress-id as query string.
-
-        const application: any = state.getData("app");
-
-        setTimeout(() => {
-          const baseUrl = process.env.FORKMAIN_URL;
-          host.openExternal(
-            baseUrl +
-              `/${application.organization}/applications/progress?progress_id=${timestamp}`
-          );
-        }, 1000);
+        NocalhostWebviewPanel.open({
+          url: "/progress",
+          title: "Show init progress of local workspace",
+        });
 
         const rootNode = Promise.resolve(
           appTreeProvider as Pick<BaseNocalhostNode, "getChildren">

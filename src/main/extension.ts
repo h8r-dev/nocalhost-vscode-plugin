@@ -224,7 +224,7 @@ export async function activate(context: vscode.ExtensionContext) {
   createSyncManage(context);
   activateNocalhostDebug(context);
 
-  syncDevState();
+  // syncDevState();
 }
 
 function syncDevState() {
