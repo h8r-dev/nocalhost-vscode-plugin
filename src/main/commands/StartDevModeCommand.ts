@@ -303,6 +303,11 @@ export default class StartDevModeCommand implements ICommand {
     const baseDir = PLUGIN_CONFIG_PROJECTS_DIR;
     destDir = path.resolve(baseDir, appName, workloadName);
 
+    // If destination dir already existed, use it directly.
+    if (existsSync(destDir)) {
+      return destDir;
+    }
+
     const [saveResult, cloneResult] = await Promise.all([
       this.saveConfig(
         kubeConfigPath,
