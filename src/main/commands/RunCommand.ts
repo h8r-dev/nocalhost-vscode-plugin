@@ -140,6 +140,7 @@ export default class RunCommand implements ICommand {
       this.terminal.dispose();
     }
   }
+
   validateRunConfig(config: ContainerConfig) {
     const schema = {
       $schema: "http://json-schema.org/schema#",

@@ -2,9 +2,12 @@ import * as vscode from "vscode";
 import * as os from "os";
 import * as path from "path";
 import * as yaml from "yaml";
+import { existsSync } from "fs";
 
-import { SIGN_IN } from "../commands/constants";
+import { EXEC, SIGN_IN, RUN } from "../commands/constants";
 import { NocalhostRootNode } from "../nodes/NocalhostRootNode";
+import NocalhostAppProvider from "../appProvider";
+import LocateWorkNodeService from "../utils/locateWorkerNode";
 
 import { LocalCluster } from "../clusters";
 import host from "../host";
@@ -13,12 +16,18 @@ import state from "../state";
 import { NOCALHOST } from "../constants";
 import { checkKubeconfig, IKubeconfig } from "../ctl/nhctl";
 import logger from "../utils/logger";
-import { existsSync } from "fs";
+
+// Forkmain Account related
+import { getStoredToken, getStoredApplicationData } from "../account";
+import { BaseNocalhostNode } from "../nodes/types/nodeType";
 
 export class HomeWebViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "Nocalhost.Home";
 
-  constructor(private readonly _extensionUri: vscode.Uri) {}
+  constructor(
+    private readonly _extensionUri: vscode.Uri,
+    private readonly appTreeProvider: NocalhostAppProvider
+  ) {}
 
   private _isRegister = false;
   private registerCommand() {
@@ -41,6 +50,18 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
   private open_forkmain_website(path: string): void {
     const baseUrl = process.env.FORKMAIN_URL;
     host.openExternal(baseUrl + path);
+  }
+
+  // Check if account token existed.
+  // TODO: validate the cached token from forkmain.com backend service.
+  // If token expired, clear local cached account data: token, user profile...
+  private async isLoggedin(): Promise<boolean> {
+    const token = await getStoredToken();
+    return token !== "";
+  }
+
+  private async getUserProfile(): Promise<any> {
+    return {};
   }
 
   private _webviewView: vscode.WebviewView;
@@ -66,16 +87,17 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
         const { type } = data;
 
         switch (type) {
+          case "init": {
+            if (!this.isLoggedin()) {
+              return;
+            }
+            const userProfile = this.getUserProfile();
+            webviewView.webview.postMessage({ userProfile });
+            break;
+          }
           case "loginForkMain": {
             const payload = data.data ?? {};
-            // this.open_forkmain_website(payload.url)
-
-            webviewView.webview.postMessage({
-              userProfile: {
-                name: "chenyuan123",
-              },
-            });
-
+            this.open_forkmain_website(payload.url);
             break;
           }
           case "manageApp": {
@@ -169,6 +191,24 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
                 vscode.window.showInformationMessage("Success");
               }
             });
+            break;
+          }
+
+          case "rerun": {
+            const locateWorkNodeService = new LocateWorkNodeService(
+              this.appTreeProvider
+            );
+            const targetNode: BaseNocalhostNode =
+              await locateWorkNodeService.getResourceNode();
+
+            if (!targetNode) {
+              return;
+            }
+
+            vscode.commands.executeCommand(RUN, targetNode, {
+              command: "rerun",
+            });
+            vscode.commands.executeCommand(EXEC, targetNode);
             break;
           }
         }
