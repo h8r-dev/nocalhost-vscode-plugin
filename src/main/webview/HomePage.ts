@@ -4,7 +4,7 @@ import * as path from "path";
 import * as yaml from "yaml";
 import { existsSync } from "fs";
 
-import { SIGN_IN, RUN } from "../commands/constants";
+import { EXEC, SIGN_IN, RUN } from "../commands/constants";
 import { NocalhostRootNode } from "../nodes/NocalhostRootNode";
 import NocalhostAppProvider from "../appProvider";
 import LocateWorkNodeService from "../utils/locateWorkerNode";
@@ -194,18 +194,21 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
             break;
           }
 
-          case "reconnect": {
-            // Kill Existing sync-files, debugger, remote run, remote terminal.
+          case "rerun": {
             const locateWorkNodeService = new LocateWorkNodeService(
               this.appTreeProvider
             );
             const targetNode: BaseNocalhostNode =
               await locateWorkNodeService.getResourceNode();
 
-            vscode.commands.executeCommand(RUN, targetNode, {
-              command: "reconnect",
-            });
+            if (!targetNode) {
+              return;
+            }
 
+            vscode.commands.executeCommand(RUN, targetNode, {
+              command: "rerun",
+            });
+            vscode.commands.executeCommand(EXEC, targetNode);
             break;
           }
         }

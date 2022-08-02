@@ -11,7 +11,7 @@ interface ApplicationProps {
 const ApplicationComp: React.FC<ApplicationProps> = ({ app }) => {
   function reconnect() {
     postMessage({
-      type: "reconnect",
+      type: "rerun",
       data: {},
     });
   }
@@ -19,7 +19,7 @@ const ApplicationComp: React.FC<ApplicationProps> = ({ app }) => {
   return (
     <div className="forkmain-app">
       <button title="Reconnect to remote workspace" onClick={reconnect}>
-        Reconnect
+        Rerun
       </button>
     </div>
   );
