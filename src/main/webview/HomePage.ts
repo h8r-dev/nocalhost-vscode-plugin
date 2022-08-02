@@ -205,9 +205,13 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
               return;
             }
 
+            // ReRun remote command in a independent terminal.
+            // the operation will kill previous command running terminal.
             vscode.commands.executeCommand(RUN, targetNode, {
               command: "rerun",
             });
+
+            // Reopen another one remote terminal, all previous terminals will be preserved.
             vscode.commands.executeCommand(EXEC, targetNode);
             break;
           }

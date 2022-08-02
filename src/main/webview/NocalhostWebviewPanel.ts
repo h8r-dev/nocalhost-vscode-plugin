@@ -85,7 +85,7 @@ export default class NocalhostWebviewPanel {
 
   public static open(props: IWebviewOpenProps) {
     let url: string = props.url;
-    const title: string = props.title || "Nocalhost";
+    const title: string = props.title || "ForkMain";
     const newTab: boolean = props.newTab || false;
     const query = props.query || {};
     const column: vscode.ViewColumn | undefined = vscode.window.activeTextEditor

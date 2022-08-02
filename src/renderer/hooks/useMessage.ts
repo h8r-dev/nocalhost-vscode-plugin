@@ -10,8 +10,8 @@ export default function useMessage() {
 
   const handleMessage = (event: MessageEvent) => {
     const data = event.data;
-    console.log("> receive message: ", data);
     const { type, payload } = data;
+
     switch (type) {
       case "location/redirect": {
         return dispatch(redirect(payload.url));
@@ -40,6 +40,9 @@ export default function useMessage() {
           })),
         };
         return dispatch(updateDeployments(deployments));
+      }
+      case "sync/initState": {
+        console.log("sync init state");
       }
       default:
         return;
