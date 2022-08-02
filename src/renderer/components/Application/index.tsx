@@ -9,27 +9,28 @@ interface ApplicationProps {
 }
 
 const ApplicationComp: React.FC<ApplicationProps> = ({ app }) => {
-  // TODO: replace with real data.
-  const appId = 123;
-  const organizationId = 345;
-
-  function manageApp() {
+  function reconnect() {
     postMessage({
-      type: "manageApp",
-      data: {
-        // TODO: Replace with real url here.
-        url: `/orgs/${organizationId}/app/${appId}`,
-      },
+      type: "reconnect",
+      data: {},
     });
   }
 
   return (
     <div className="forkmain-app">
-      <button title="Manage Your Application" onClick={manageApp}>
-        Manage Application
+      <button title="Reconnect to remote workspace" onClick={reconnect}>
+        Reconnect
       </button>
     </div>
   );
+
+  // return (
+  //   <div className="forkmain-app">
+  //     <button title="Manage Your Application" onClick={manageApp}>
+  //       Manage Application
+  //     </button>
+  //   </div>
+  // );
 };
 
 export default ApplicationComp;

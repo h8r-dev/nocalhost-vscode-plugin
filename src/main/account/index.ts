@@ -137,6 +137,36 @@ export async function getStoredApplicationData(): Promise<any> {
   }
 }
 
+// Get stored account token.
+// TODO: currently, only check token of first account if multi accounts stored.
+// FIXME.
+export async function getStoredToken(): Promise<string> {
+  try {
+    const accountDir = path.resolve(PLUGIN_CONFIG_ACCOUNT_DIR);
+    if (!isExistSync(accountDir)) {
+      return "";
+    }
+
+    const accounts = getFilesByDir(accountDir);
+    const firstAccount = accounts[0];
+
+    if (!firstAccount) {
+      return "";
+    }
+
+    const tokenPath = path.resolve(accountDir, firstAccount, TOKEN_FILE);
+    if (!isExistSync(tokenPath)) {
+      return "";
+    }
+
+    const token = await readFile(tokenPath);
+    return token;
+  } catch (error) {
+    recordError(`Get stored application data with error: ${error}`);
+    return "";
+  }
+}
+
 // Clear stored token when logout
 export function clearStoredToken(email: string): void {
   // TODO: Clear token here

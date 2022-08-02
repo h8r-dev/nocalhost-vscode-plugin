@@ -10,10 +10,9 @@ interface AccountProps {
 
 const AccountComp: React.FC<AccountProps> = (props) => {
   const { name } = props.profile;
-
   return (
     <div className="forkmain-account">
-      <p style={{ marginBottom: 10 }}>Welcome to ForkMain, {name}</p>
+      <p style={{ marginBottom: 10 }}>Welcome to ForkMain!</p>
     </div>
   );
 };
