@@ -514,6 +514,7 @@ export default class StartDevModeCommand implements ICommand {
         image,
         header
       );
+
       host.log("dev start end", true);
       host.log("", true);
 
@@ -538,7 +539,6 @@ export default class StartDevModeCommand implements ICommand {
       }
       await vscode.commands.executeCommand("Nocalhost.refresh", parent);
 
-      // await vscode.commands.executeCommand(EXEC, node);
       const terminal = await nhctl.devTerminal(
         node.getAppName(),
         node.name,

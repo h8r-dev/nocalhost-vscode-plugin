@@ -89,7 +89,10 @@ export async function activate(context: vscode.ExtensionContext) {
   // TODO: DO NOT DELETE, FOR: [webview integration]
   // const dataCenter: DataCenter = DataCenter.getInstance();
   // dataCenter.addListener(() => appTreeProvider.refresh());
-  let homeWebViewProvider = new HomeWebViewProvider(context.extensionUri);
+  let homeWebViewProvider = new HomeWebViewProvider(
+    context.extensionUri,
+    appTreeProvider
+  );
 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(

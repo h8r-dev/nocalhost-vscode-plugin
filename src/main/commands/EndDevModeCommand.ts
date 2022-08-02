@@ -50,11 +50,13 @@ export default class EndDevModeCommand implements ICommand {
     host.getOutputChannel().show(true);
     const devSpace = appNode.getParent() as DevSpaceNode;
     host.disposeWorkload(devSpace.info.spaceName, appNode.name, node.name);
+
     messageBus.emit("endDevMode", {
       devSpaceName: devSpace.info.spaceName,
       appName: appNode.name,
       workloadName: node.name,
     });
+
     await nhctl.endDevMode(
       host,
       node.getKubeConfigPath(),
@@ -63,6 +65,7 @@ export default class EndDevModeCommand implements ICommand {
       node.name,
       node.resourceType
     );
+
     await node.setStatus("");
     await node.setContainer("");
     await node.getParent().updateData(false);

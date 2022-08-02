@@ -1217,6 +1217,7 @@ export async function overrideSyncFolders(
 
   await exec({ command });
 }
+
 export async function reconnectSync(
   kubeConfigPath: string,
   namespace: string,
@@ -1601,28 +1602,31 @@ export async function vpn(param: {
 }
 
 export interface ClusterDevState {
-  isUnderDeveloping: boolean,
-  isDebugEnabled: boolean,
-  isRunEnabled: boolean,
+  isUnderDeveloping: boolean;
+  isDebugEnabled: boolean;
+  isRunEnabled: boolean;
 }
 
 export async function moniterClusterState(params: {
-  host: Host,
-  kubeconfigPath: string,
-  namespace: string,
-  appName: string,
-  workLoadName: string,
-  workloadType: string,
-  container?: string,
+  host: Host;
+  kubeconfigPath: string;
+  namespace: string;
+  appName: string;
+  workLoadName: string;
+  workloadType: string;
+  container?: string;
 }): Promise<ClusterDevState> {
   const {
-    host, kubeconfigPath, namespace, appName,
-    workLoadName, workloadType, container,
+    host,
+    kubeconfigPath,
+    namespace,
+    appName,
+    workLoadName,
+    workloadType,
+    container,
   } = params;
 
-  let command = NhctlCommand.create(
-    `monitor`,
-  ).getCommand();
+  let command = NhctlCommand.create(`monitor`).getCommand();
 
   return {
     isUnderDeveloping: false,
