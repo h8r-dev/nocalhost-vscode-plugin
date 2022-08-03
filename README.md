@@ -1,4 +1,4 @@
-# ForkMain for Visual Code
+# ForkMain for Visual Studio Code
 
 ForkMain for VS Code brings the power and convenience of IDEs to cloud-native Kubernetes application development. It helps you to increase agility and speed to develop cloud-native applications on Kubernetes.
 
