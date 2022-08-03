@@ -57,31 +57,35 @@ export default class DebugCommand implements ICommand {
       return;
     }
 
+    host.log(`${this.command} command executed!`, true);
+
     this.configuration = param?.configuration;
     this.isAutoMode = param?.isAutoMode || false;
     this.node = node;
     this.container = await getContainer(node);
 
-    this.validateDebugConfig(this.container);
+    host.showProgressing("Entering debug mode...", async () => {
+      this.validateDebugConfig(this.container);
 
-    if (!param?.command) {
-      const status = await node.getStatus(true);
+      if (!param?.command) {
+        const status = await node.getStatus(true);
 
-      if (status !== "developing") {
-        vscode.commands.executeCommand(START_DEV_MODE, node, {
-          command: DEBUG,
-          configuration: this.configuration,
-          isAutoMode: this.isAutoMode,
-        });
-        return;
+        if (status !== "developing") {
+          vscode.commands.executeCommand(START_DEV_MODE, node, {
+            command: DEBUG,
+            configuration: this.configuration,
+            isAutoMode: this.isAutoMode,
+          });
+          return;
+        }
       }
-    }
 
-    const debugProvider = await this.getDebugProvider();
+      const debugProvider = await this.getDebugProvider();
 
-    await waitForSync(node, DEBUG);
+      await waitForSync(node, DEBUG);
 
-    this.startDebugging(node, debugProvider);
+      this.startDebugging(node, debugProvider);
+    });
   }
 
   validateDebugConfig(config: ContainerConfig) {

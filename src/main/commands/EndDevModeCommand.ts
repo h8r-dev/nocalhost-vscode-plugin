@@ -16,11 +16,15 @@ export default class EndDevModeCommand implements ICommand {
     this.context = context;
     registerCommand(context, this.command, true, this.execCommand.bind(this));
   }
+
   async execCommand(node: ControllerResourceNode) {
     if (!node) {
       host.showWarnMessage("Failed to get node configs, please try again.");
       return;
     }
+
+    host.log(`${this.command} command executed!`, true);
+
     let result = "Yes";
     const svcProfile = await nhctl.getServiceConfig(
       node.getKubeConfigPath(),
@@ -57,17 +61,19 @@ export default class EndDevModeCommand implements ICommand {
       workloadName: node.name,
     });
 
-    await nhctl.endDevMode(
-      host,
-      node.getKubeConfigPath(),
-      node.getNameSpace(),
-      appNode.name,
-      node.name,
-      node.resourceType
-    );
+    host.showProgressing("Ending dev mode...", async () => {
+      await nhctl.endDevMode(
+        host,
+        node.getKubeConfigPath(),
+        node.getNameSpace(),
+        appNode.name,
+        node.name,
+        node.resourceType
+      );
 
-    await node.setStatus("");
-    await node.setContainer("");
-    await node.getParent().updateData(false);
+      await node.setStatus("");
+      await node.setContainer("");
+      await node.getParent().updateData(false);
+    });
   }
 }

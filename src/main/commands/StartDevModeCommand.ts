@@ -92,6 +92,8 @@ export default class StartDevModeCommand implements ICommand {
       return;
     }
 
+    host.log(`${this.command} command executed!`, true);
+
     let image = info?.image;
     const mode = info?.mode || "replace";
     const header = info?.header;
@@ -104,103 +106,104 @@ export default class StartDevModeCommand implements ICommand {
     const namespace = node.getNameSpace();
     const kubeConfigPath = node.getKubeConfigPath();
 
-    // Do not check CRD workload.
-    if (ValidWorkloadTypes.includes(node.resourceType)) {
-      await nhctl.NhctlCommand.authCheck({
-        base: "dev",
-        args: ["start", appName, "-t" + node.resourceType, node.name],
-        kubeConfigPath: kubeConfigPath,
+    host.showProgressing("Connecting to remote workspace...", async () => {
+      // Do not check CRD workload.
+      if (ValidWorkloadTypes.includes(node.resourceType)) {
+        host.log(`${this.command}: auth check...`, true);
+        await nhctl.NhctlCommand.authCheck({
+          base: "dev",
+          args: ["start", appName, "-t" + node.resourceType, node.name],
+          kubeConfigPath: kubeConfigPath,
+          namespace,
+        }).exec();
+      }
+
+      host.log("[start dev] Initializing..", true);
+
+      // get container name from storage
+      let containerName = await node.getContainer();
+      if (!containerName) {
+        host.log("Get container name...", true);
+        containerName = await getContainer({
+          appName,
+          name,
+          resourceType,
+          namespace,
+          kubeConfigPath,
+        });
+      }
+
+      host.log(`[start dev] Start container: ${containerName}`, true);
+
+      this.containerName = containerName;
+
+      // Alert developer when multi developers are working on same service.
+      if (containerName === "nocalhost-dev") {
+        host.showErrorMessage(
+          "Error: The service is already under developing, exit."
+        );
+        return;
+      }
+
+      host.log("Get local workspace dir...", true);
+
+      const destDir = await this.cloneOrGetFolderDir(
+        appName,
+        node,
+        containerName
+      );
+
+      if (!destDir) {
+        return;
+      }
+
+      image = await this.getImageName(image, containerName);
+
+      if (!image) {
+        return;
+      }
+
+      await this.saveConfig(
+        kubeConfigPath,
         namespace,
-      }).exec();
-    }
-
-    // Show the node in tree view.
-    if (node instanceof ControllerResourceNode && appTreeView) {
-      await appTreeView.reveal(node, { select: true, focus: true });
-    }
-
-    host.log("[start dev] Initializing..", true);
-
-    // get container name from storage
-    let containerName = await node.getContainer();
-    if (!containerName) {
-      containerName = await getContainer({
         appName,
         name,
         resourceType,
-        namespace,
-        kubeConfigPath,
-      });
-    }
-
-    host.log(`[start dev] Container: ${containerName}`, true);
-
-    this.containerName = containerName;
-
-    // Alert developer when multi developers are working on same service.
-    if (containerName === "nocalhost-dev") {
-      host.showErrorMessage(
-        "Error: The service is already under developing, exit."
-      );
-      return;
-    }
-
-    const destDir = await this.cloneOrGetFolderDir(
-      appName,
-      node,
-      containerName
-    );
-
-    if (!destDir) {
-      return;
-    }
-
-    image = await this.getImageName(image, containerName);
-
-    if (!image) {
-      return;
-    }
-
-    await this.saveConfig(
-      kubeConfigPath,
-      namespace,
-      appName,
-      name,
-      resourceType,
-      containerName,
-      "image",
-      image as string
-    );
-
-    if (
-      destDir === true ||
-      (destDir && destDir === host.getCurrentRootPath())
-    ) {
-      await this.startDevMode(
-        host,
-        appName,
-        node,
         containerName,
-        mode,
-        image,
-        header
+        "image",
+        image as string
       );
-    } else if (destDir) {
-      this.saveAndOpenFolder(
-        appName,
-        node,
-        destDir,
-        containerName,
-        mode,
-        image,
-        header
-      );
-      messageBus.emit("devStart", {
-        name: appName,
-        destDir,
-        container: containerName,
-      });
-    }
+
+      if (
+        destDir === true ||
+        (destDir && destDir === host.getCurrentRootPath())
+      ) {
+        await this.startDevMode(
+          host,
+          appName,
+          node,
+          containerName,
+          mode,
+          image,
+          header
+        );
+      } else if (destDir) {
+        this.saveAndOpenFolder(
+          appName,
+          node,
+          destDir,
+          containerName,
+          mode,
+          image,
+          header
+        );
+        messageBus.emit("devStart", {
+          name: appName,
+          destDir,
+          container: containerName,
+        });
+      }
+    });
   }
 
   private async getImageName(image: string | undefined, containerName: string) {
@@ -319,7 +322,7 @@ export default class StartDevModeCommand implements ICommand {
         "gitUrl",
         gitUrl
       ),
-      host.showProgressing("Starting DevMode", async (progress) => {
+      host.showProgressing("Cloning source code...", async (progress) => {
         progress.report({ message: "Cloning source code..." });
         const result = await git.clone(host, gitUrl as string, [
           replaceSpacePath(destDir) as string,

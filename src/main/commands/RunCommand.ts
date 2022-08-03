@@ -49,29 +49,33 @@ export default class RunCommand implements ICommand {
       return;
     }
 
+    host.log(`${this.command} command executed!`, true);
+
     this.node = node;
     this.container = await getContainer(node);
     this.isAutoMode = param?.isAutoMode || false;
 
-    this.validateRunConfig(this.container);
+    host.showProgressing("Entering run mode...", async () => {
+      this.validateRunConfig(this.container);
 
-    if (!param?.command) {
-      const status = await node.getStatus(true);
+      if (!param?.command) {
+        const status = await node.getStatus(true);
 
-      if (status !== "developing") {
-        vscode.commands.executeCommand(START_DEV_MODE, node, {
-          command: RUN,
-          isAutoMode: this.isAutoMode,
-        });
-        return;
+        if (status !== "developing") {
+          vscode.commands.executeCommand(START_DEV_MODE, node, {
+            command: RUN,
+            isAutoMode: this.isAutoMode,
+          });
+          return;
+        }
       }
-    }
 
-    await waitForSync(node, RUN);
+      await waitForSync(node, RUN);
 
-    const name = `${capitalCase(node.name)} Process Console`;
+      const name = `${capitalCase(node.name)} Process Console`;
 
-    await this.startRun(name);
+      await this.startRun(name);
+    });
   }
 
   async startRun(name: string) {
