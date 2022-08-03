@@ -122,6 +122,7 @@ export default class AutoStartDevModeCommand implements ICommand {
     switch (action) {
       case "run":
         host.log("Entering run mode.", true);
+        host.showInformationMessage("Waiting for entering run mode...");
         vscode.commands.executeCommand(RUN, targetWorkloadNode, {
           isAutoMode: true,
         }); // Enter dev mode.
@@ -129,6 +130,7 @@ export default class AutoStartDevModeCommand implements ICommand {
 
       case "debug":
         host.log("Entering debug mode.", true);
+        host.showInformationMessage("Waiting for entering debug mode...");
         vscode.commands.executeCommand(DEBUG, targetWorkloadNode, {
           isAutoMode: true,
         }); // Enter debug mode.
@@ -136,6 +138,7 @@ export default class AutoStartDevModeCommand implements ICommand {
 
       case "stop":
         host.log("Exiting from dev mode.", true);
+        host.showInformationMessage("Waiting for stopping dev mode...", {});
         vscode.commands.executeCommand(END_DEV_MODE, targetWorkloadNode, {
           isAutoMode: true,
         }); // End dev mode.
