@@ -33,7 +33,6 @@ import * as nls from "../../../package.nls.json";
 import { replaceSpacePath } from "../utils/fileUtil";
 import { BaseNocalhostNode, DeploymentStatus } from "../nodes/types/nodeType";
 import { ControllerResourceNode } from "../nodes/workloads/controllerResources/ControllerResourceNode";
-import { appTreeView } from "../extension";
 import messageBus from "../utils/messageBus";
 import logger from "../utils/logger";
 import { getContainer } from "../utils/getContainer";
@@ -206,6 +205,45 @@ export default class StartDevModeCommand implements ICommand {
     });
   }
 
+  private async firstOpen(
+    appName: string,
+    node: ControllerNodeApi,
+    containerName: string
+  ) {
+    let destDir: string | undefined;
+    const result = await host.showInformationMessage(
+      nls["tips.clone"],
+      { modal: true },
+      nls["bt.clone"],
+      nls["bt.open.dir"]
+    );
+    if (!result) {
+      return;
+    }
+    if (result === nls["bt.clone"]) {
+      destDir = await this.cloneCode(
+        host,
+        node.getKubeConfigPath(),
+        node.getNameSpace(),
+        appName,
+        node.name,
+        node.resourceType,
+        containerName
+      );
+    } else if (result === nls["bt.open.dir"]) {
+      const uris = await host.showOpenDialog({
+        canSelectFiles: false,
+        canSelectFolders: true,
+        canSelectMany: false,
+      });
+      if (uris && uris.length > 0) {
+        destDir = uris[0].fsPath;
+      }
+    }
+
+    return destDir;
+  }
+
   private async getImageName(image: string | undefined, containerName: string) {
     // check image
     if (image) {
@@ -323,7 +361,6 @@ export default class StartDevModeCommand implements ICommand {
         gitUrl
       ),
       host.showProgressing("Cloning source code...", async (progress) => {
-        progress.report({ message: "Cloning source code..." });
         const result = await git.clone(host, gitUrl as string, [
           replaceSpacePath(destDir) as string,
         ]);
@@ -422,15 +459,7 @@ export default class StartDevModeCommand implements ICommand {
     const currentUri = host.getCurrentRootPath();
 
     if (!associateDir) {
-      destDir = await this.cloneCode(
-        host,
-        node.getKubeConfigPath(),
-        node.getNameSpace(),
-        appName,
-        node.name,
-        node.resourceType,
-        containerName
-      );
+      destDir = await this.firstOpen(appName, node, containerName);
     } else if (currentUri !== associateDir) {
       destDir = await this.getTargetDirectory();
     } else {
