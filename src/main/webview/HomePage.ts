@@ -4,7 +4,7 @@ import * as path from "path";
 import * as yaml from "yaml";
 import { existsSync } from "fs";
 
-import { EXEC, SIGN_IN, RUN } from "../commands/constants";
+import { PORT_FORWARD, DEBUG, EXEC, SIGN_IN, RUN } from "../commands/constants";
 import { NocalhostRootNode } from "../nodes/NocalhostRootNode";
 import NocalhostAppProvider from "../appProvider";
 import LocateWorkNodeService from "../utils/locateWorkerNode";
@@ -23,11 +23,21 @@ import { BaseNocalhostNode } from "../nodes/types/nodeType";
 
 export class HomeWebViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "Nocalhost.Home";
+  private locateWorkNodeSrvice: LocateWorkNodeService;
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
     private readonly appTreeProvider: NocalhostAppProvider
-  ) {}
+  ) {
+    this._extensionUri = _extensionUri;
+    this.appTreeProvider = appTreeProvider;
+    this.locateWorkNodeSrvice = new LocateWorkNodeService(appTreeProvider);
+  }
+
+  private async locateWorkNode(): Promise<BaseNocalhostNode> {
+    const node = await this.locateWorkNodeSrvice.getResourceNode();
+    return node;
+  }
 
   private _isRegister = false;
   private registerCommand() {
@@ -85,7 +95,6 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage(
       async (data: { data: any; type: string }) => {
         const { type } = data;
-
         switch (type) {
           case "init": {
             if (!this.isLoggedin()) {
@@ -195,20 +204,40 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
           }
 
           case "rerun": {
-            const locateWorkNodeService = new LocateWorkNodeService(
-              this.appTreeProvider
-            );
-            const targetNode: BaseNocalhostNode =
-              await locateWorkNodeService.getResourceNode();
-
+            const targetNode: BaseNocalhostNode = await this.locateWorkNode();
             if (!targetNode) {
               return;
             }
-
             vscode.commands.executeCommand(RUN, targetNode, {
               command: "rerun",
             });
+            break;
+          }
+
+          case "openTerminal": {
+            const targetNode: BaseNocalhostNode = await this.locateWorkNode();
+            if (!targetNode) {
+              return;
+            }
             vscode.commands.executeCommand(EXEC, targetNode);
+            break;
+          }
+
+          case "portForward": {
+            const targetNode: BaseNocalhostNode = await this.locateWorkNode();
+            if (!targetNode) {
+              return;
+            }
+            vscode.commands.executeCommand(PORT_FORWARD, targetNode);
+            break;
+          }
+
+          case "remoteDebug": {
+            const targetNode: BaseNocalhostNode = await this.locateWorkNode();
+            if (!targetNode) {
+              return;
+            }
+            vscode.commands.executeCommand(DEBUG, targetNode);
             break;
           }
         }
