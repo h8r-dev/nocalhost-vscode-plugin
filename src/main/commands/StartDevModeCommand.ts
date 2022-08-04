@@ -33,7 +33,6 @@ import * as nls from "../../../package.nls.json";
 import { replaceSpacePath } from "../utils/fileUtil";
 import { BaseNocalhostNode, DeploymentStatus } from "../nodes/types/nodeType";
 import { ControllerResourceNode } from "../nodes/workloads/controllerResources/ControllerResourceNode";
-import { appTreeView } from "../extension";
 import messageBus from "../utils/messageBus";
 import logger from "../utils/logger";
 import { getContainer } from "../utils/getContainer";
@@ -92,6 +91,8 @@ export default class StartDevModeCommand implements ICommand {
       return;
     }
 
+    host.log(`${this.command} command executed!`, true);
+
     let image = info?.image;
     const mode = info?.mode || "replace";
     const header = info?.header;
@@ -104,103 +105,143 @@ export default class StartDevModeCommand implements ICommand {
     const namespace = node.getNameSpace();
     const kubeConfigPath = node.getKubeConfigPath();
 
-    // Do not check CRD workload.
-    if (ValidWorkloadTypes.includes(node.resourceType)) {
-      await nhctl.NhctlCommand.authCheck({
-        base: "dev",
-        args: ["start", appName, "-t" + node.resourceType, node.name],
-        kubeConfigPath: kubeConfigPath,
+    host.showProgressing("Connecting to remote workspace...", async () => {
+      // Do not check CRD workload.
+      if (ValidWorkloadTypes.includes(node.resourceType)) {
+        host.log(`${this.command}: auth check...`, true);
+        await nhctl.NhctlCommand.authCheck({
+          base: "dev",
+          args: ["start", appName, "-t" + node.resourceType, node.name],
+          kubeConfigPath: kubeConfigPath,
+          namespace,
+        }).exec();
+      }
+
+      host.log("[start dev] Initializing..", true);
+
+      // get container name from storage
+      let containerName = await node.getContainer();
+      if (!containerName) {
+        host.log("Get container name...", true);
+        containerName = await getContainer({
+          appName,
+          name,
+          resourceType,
+          namespace,
+          kubeConfigPath,
+        });
+      }
+
+      host.log(`[start dev] Start container: ${containerName}`, true);
+
+      this.containerName = containerName;
+
+      // Alert developer when multi developers are working on same service.
+      if (containerName === "nocalhost-dev") {
+        host.showErrorMessage(
+          "Error: The service is already under developing, exit."
+        );
+        return;
+      }
+
+      host.log("Get local workspace dir...", true);
+
+      const destDir = await this.cloneOrGetFolderDir(
+        appName,
+        node,
+        containerName
+      );
+
+      if (!destDir) {
+        return;
+      }
+
+      image = await this.getImageName(image, containerName);
+
+      if (!image) {
+        return;
+      }
+
+      await this.saveConfig(
+        kubeConfigPath,
         namespace,
-      }).exec();
-    }
-
-    // Show the node in tree view.
-    if (node instanceof ControllerResourceNode && appTreeView) {
-      await appTreeView.reveal(node, { select: true, focus: true });
-    }
-
-    host.log("[start dev] Initializing..", true);
-
-    // get container name from storage
-    let containerName = await node.getContainer();
-    if (!containerName) {
-      containerName = await getContainer({
         appName,
         name,
         resourceType,
-        namespace,
-        kubeConfigPath,
-      });
-    }
-
-    host.log(`[start dev] Container: ${containerName}`, true);
-
-    this.containerName = containerName;
-
-    // Alert developer when multi developers are working on same service.
-    if (containerName === "nocalhost-dev") {
-      host.showErrorMessage(
-        "Error: The service is already under developing, exit."
+        containerName,
+        "image",
+        image as string
       );
-      return;
-    }
 
-    const destDir = await this.cloneOrGetFolderDir(
-      appName,
-      node,
-      containerName
+      if (
+        destDir === true ||
+        (destDir && destDir === host.getCurrentRootPath())
+      ) {
+        await this.startDevMode(
+          host,
+          appName,
+          node,
+          containerName,
+          mode,
+          image,
+          header
+        );
+      } else if (destDir) {
+        this.saveAndOpenFolder(
+          appName,
+          node,
+          destDir,
+          containerName,
+          mode,
+          image,
+          header
+        );
+        messageBus.emit("devStart", {
+          name: appName,
+          destDir,
+          container: containerName,
+        });
+      }
+    });
+  }
+
+  private async firstOpen(
+    appName: string,
+    node: ControllerNodeApi,
+    containerName: string
+  ) {
+    let destDir: string | undefined;
+    const result = await host.showInformationMessage(
+      nls["tips.clone"],
+      { modal: true },
+      nls["bt.clone"],
+      nls["bt.open.dir"]
     );
-
-    if (!destDir) {
+    if (!result) {
       return;
     }
-
-    image = await this.getImageName(image, containerName);
-
-    if (!image) {
-      return;
-    }
-
-    await this.saveConfig(
-      kubeConfigPath,
-      namespace,
-      appName,
-      name,
-      resourceType,
-      containerName,
-      "image",
-      image as string
-    );
-
-    if (
-      destDir === true ||
-      (destDir && destDir === host.getCurrentRootPath())
-    ) {
-      await this.startDevMode(
+    if (result === nls["bt.clone"]) {
+      destDir = await this.cloneCode(
         host,
+        node.getKubeConfigPath(),
+        node.getNameSpace(),
         appName,
-        node,
-        containerName,
-        mode,
-        image,
-        header
+        node.name,
+        node.resourceType,
+        containerName
       );
-    } else if (destDir) {
-      this.saveAndOpenFolder(
-        appName,
-        node,
-        destDir,
-        containerName,
-        mode,
-        image,
-        header
-      );
-      messageBus.emit("devStart", {
-        name: appName,
-        destDir,
-        container: containerName,
+    } else if (result === nls["bt.open.dir"]) {
+      const uris = await host.showOpenDialog({
+        canSelectFiles: false,
+        canSelectFolders: true,
+        canSelectMany: false,
       });
+      if (uris && uris.length > 0) {
+        destDir = uris[0].fsPath;
+      }
     }
+
+    return destDir;
   }
 
   private async getImageName(image: string | undefined, containerName: string) {
@@ -319,8 +360,7 @@ export default class StartDevModeCommand implements ICommand {
         "gitUrl",
         gitUrl
       ),
-      host.showProgressing("Starting DevMode", async (progress) => {
-        progress.report({ message: "Cloning source code..." });
+      host.showProgressing("Cloning source code...", async (progress) => {
         const result = await git.clone(host, gitUrl as string, [
           replaceSpacePath(destDir) as string,
         ]);
@@ -419,15 +459,7 @@ export default class StartDevModeCommand implements ICommand {
     const currentUri = host.getCurrentRootPath();
 
     if (!associateDir) {
-      destDir = await this.cloneCode(
-        host,
-        node.getKubeConfigPath(),
-        node.getNameSpace(),
-        appName,
-        node.name,
-        node.resourceType,
-        containerName
-      );
+      destDir = await this.firstOpen(appName, node, containerName);
     } else if (currentUri !== associateDir) {
       destDir = await this.getTargetDirectory();
     } else {

@@ -94,8 +94,18 @@ export default class AutoStartDevModeCommand implements ICommand {
           await this.locateWorkerloadNode(rootNode, searchPath);
 
         if (!targetWorkloadNode) {
-          host.log("Failed to find workload node, exit.", true);
-          await host.showErrorMessage("Failed to find workload node, exit.");
+          host.log(
+            "Failed to find workload node, please try again later, exit.",
+            true
+          );
+          host.log("----------------- Debug Info ----------------------", true);
+          host.log(JSON.stringify(targetWorkloadNode), true);
+          host.log(JSON.stringify(rootNode), true);
+          host.log(searchPath.toString(), true);
+          host.log("----------------- Debug Info ----------------------", true);
+          await host.showErrorMessage(
+            "Failed to find workload node, please try again later, exit."
+          );
           return;
         }
 
@@ -111,18 +121,24 @@ export default class AutoStartDevModeCommand implements ICommand {
   ): void {
     switch (action) {
       case "run":
+        host.log("Entering run mode.", true);
+        host.showInformationMessage("Waiting for entering run mode...");
         vscode.commands.executeCommand(RUN, targetWorkloadNode, {
           isAutoMode: true,
         }); // Enter dev mode.
         break;
 
       case "debug":
+        host.log("Entering debug mode.", true);
+        host.showInformationMessage("Waiting for entering debug mode...");
         vscode.commands.executeCommand(DEBUG, targetWorkloadNode, {
           isAutoMode: true,
         }); // Enter debug mode.
         break;
 
       case "stop":
+        host.log("Exiting from dev mode.", true);
+        host.showInformationMessage("Waiting for stopping dev mode...", {});
         vscode.commands.executeCommand(END_DEV_MODE, targetWorkloadNode, {
           isAutoMode: true,
         }); // End dev mode.
