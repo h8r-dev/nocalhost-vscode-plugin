@@ -24,19 +24,22 @@ import { BaseNocalhostNode } from "../nodes/types/nodeType";
 export class HomeWebViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "Nocalhost.Home";
   private locateWorkNodeSrvice: LocateWorkNodeService;
+  private currentWorkNode: BaseNocalhostNode = null;
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
-    private readonly appTreeProvider: NocalhostAppProvider
+    appTreeProvider: NocalhostAppProvider
   ) {
     this._extensionUri = _extensionUri;
-    this.appTreeProvider = appTreeProvider;
     this.locateWorkNodeSrvice = new LocateWorkNodeService(appTreeProvider);
   }
 
   private async locateWorkNode(): Promise<BaseNocalhostNode> {
-    const node = await this.locateWorkNodeSrvice.getResourceNode();
-    return node;
+    if (this.currentWorkNode === null) {
+      const node = await this.locateWorkNodeSrvice.getResourceNode();
+      this.currentWorkNode = node;
+    }
+    return this.currentWorkNode;
   }
 
   private _isRegister = false;
