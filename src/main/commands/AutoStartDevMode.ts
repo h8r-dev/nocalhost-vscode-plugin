@@ -138,7 +138,7 @@ export default class AutoStartDevModeCommand implements ICommand {
 
       case "stop":
         host.log("Exiting from dev mode.", true);
-        host.showInformationMessage("Waiting for stopping dev mode...", {});
+        host.showInformationMessage("Waiting for stopping dev mode...");
         vscode.commands.executeCommand(END_DEV_MODE, targetWorkloadNode, {
           isAutoMode: true,
         }); // End dev mode.

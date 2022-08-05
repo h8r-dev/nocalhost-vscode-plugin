@@ -4,7 +4,14 @@ import * as path from "path";
 import * as yaml from "yaml";
 import { existsSync } from "fs";
 
-import { PORT_FORWARD, DEBUG, EXEC, SIGN_IN, RUN } from "../commands/constants";
+import {
+  END_DEV_MODE,
+  PORT_FORWARD,
+  DEBUG,
+  EXEC,
+  SIGN_IN,
+  RUN,
+} from "../commands/constants";
 import { NocalhostRootNode } from "../nodes/NocalhostRootNode";
 import NocalhostAppProvider from "../appProvider";
 import LocateWorkNodeService from "../utils/locateWorkerNode";
@@ -241,6 +248,15 @@ export class HomeWebViewProvider implements vscode.WebviewViewProvider {
               return;
             }
             vscode.commands.executeCommand(DEBUG, targetNode);
+            break;
+          }
+
+          case "stopDevMode": {
+            const targetNode: BaseNocalhostNode = await this.locateWorkNode();
+            if (!targetNode) {
+              return;
+            }
+            vscode.commands.executeCommand(END_DEV_MODE, targetNode);
             break;
           }
         }
