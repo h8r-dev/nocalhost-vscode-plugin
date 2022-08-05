@@ -38,6 +38,13 @@ const ApplicationComp: React.FC<ApplicationProps> = ({ app }) => {
     });
   }
 
+  function stopDevMode() {
+    postMessage({
+      type: "stopDevMode",
+      data: {},
+    });
+  }
+
   return (
     <div className="forkmain-app">
       <div style={{ display: "flex", paddingTop: 10, paddingBottom: 10 }}>
@@ -60,6 +67,17 @@ const ApplicationComp: React.FC<ApplicationProps> = ({ app }) => {
           onClick={remoteDebug}
         >
           Debug
+        </button>
+        <button
+          style={{
+            width: 100,
+            marginLeft: 20,
+            backgroundColor: "#b22a00",
+          }}
+          title="Stop the dev mode"
+          onClick={stopDevMode}
+        >
+          Stop
         </button>
       </div>
       <Divider />
